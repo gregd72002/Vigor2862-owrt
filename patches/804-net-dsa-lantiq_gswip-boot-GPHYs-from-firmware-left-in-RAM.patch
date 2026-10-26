@@ -1,0 +1,134 @@
+From: Gregory Dymarek <gregd72002@gmail.com>
+Subject: [PATCH] net: dsa: lantiq_gswip: boot GPHYs from firmware left in RAM
+
+On the DrayTek Vigor 2862 the GPHY firmware is part of the bootloader, not
+a file. U-Boot leaves a copy in RAM outside the kernel's memory.
+
+Add an optional "memory-region" to the GPHY nodes. The image starts at
+the (16 KiB aligned) region, its last 16 bytes hold a trailer: be32 magic
+"GPHY", length, crc32 of the image and 0. If the trailer checks out, the
+GPHY boots from the region directly; otherwise the firmware file is
+requested as before.
+
+Signed-off-by: Gregory Dymarek <gregd72002@gmail.com>
+---
+--- a/drivers/net/dsa/lantiq/Kconfig
++++ b/drivers/net/dsa/lantiq/Kconfig
+@@ -2,6 +2,7 @@
+ 	tristate "Lantiq / Intel GSWIP"
+ 	depends on HAS_IOMEM
+ 	select NET_DSA_TAG_GSWIP
++	select CRC32
+ 	help
+ 	  This enables support for the Lantiq / Intel GSWIP 2.1 found in
+ 	  the xrx200 / VR9 SoC.
+--- a/drivers/net/dsa/lantiq/lantiq_gswip.h
++++ b/drivers/net/dsa/lantiq/lantiq_gswip.h
+@@ -248,6 +248,7 @@
+ 	struct reset_control *reset;
+ 	u32 fw_addr_offset;
+ 	char *fw_name;
++	struct resource fw_mem;	/* firmware left in RAM by the bootloader */
+ };
+ 
+ struct gswip_vlan {
+--- a/drivers/net/dsa/lantiq/lantiq_gswip.c
++++ b/drivers/net/dsa/lantiq/lantiq_gswip.c
+@@ -28,6 +28,7 @@
+ #include "lantiq_gswip.h"
+ #include "lantiq_pce.h"
+ 
++#include <linux/crc32.h>
+ #include <linux/delay.h>
+ #include <linux/etherdevice.h>
+ #include <linux/firmware.h>
+@@ -39,6 +40,7 @@
+ #include <linux/of_mdio.h>
+ #include <linux/of_net.h>
+ #include <linux/of_platform.h>
++#include <linux/of_reserved_mem.h>
+ #include <linux/phy.h>
+ #include <linux/phylink.h>
+ #include <dt-bindings/mips/lantiq_rcu_gphy.h>
+@@ -1691,6 +1693,49 @@
+ 	{},
+ };
+ 
++#define GSWIP_GPHY_FW_MEM_MAGIC	0x47504859	/* "GPHY" */
++
++/* A bootloader can leave the GPHY firmware in a reserved memory region: the
++ * image at its start, a trailer (be32 magic, length, crc32, 0) in its last
++ * 16 bytes. The GPHYs then boot from there directly.
++ */
++static int gswip_gphy_fw_mem_check(struct gswip_priv *priv,
++				   struct gswip_gphy_fw *gphy_fw)
++{
++	struct resource *res = &gphy_fw->fw_mem;
++	resource_size_t size = resource_size(res);
++	struct device *dev = priv->dev;
++	u32 magic, len, crc;
++	__be32 *trailer;
++	void *fw;
++	int ret = -EINVAL;
++
++	if (!IS_ALIGNED(res->start, XRX200_GPHY_FW_ALIGN) || size < 16) {
++		dev_err(dev, "unusable GPHY firmware region %pR\n", res);
++		return -EINVAL;
++	}
++
++	fw = memremap(res->start, size, MEMREMAP_WB);
++	if (!fw)
++		return -ENOMEM;
++
++	trailer = fw + size - 16;
++	magic = be32_to_cpu(trailer[0]);
++	len = be32_to_cpu(trailer[1]);
++	crc = be32_to_cpu(trailer[2]);
++
++	if (magic != GSWIP_GPHY_FW_MEM_MAGIC || !len || len > size - 16)
++		dev_warn(dev, "no GPHY firmware in %pR\n", res);
++	else if (~crc32_le(~0, fw, len) != crc)
++		dev_warn(dev, "GPHY firmware in %pR: bad crc32\n", res);
++	else
++		ret = 0;
++
++	memunmap(fw);
++
++	return ret;
++}
++
+ static int gswip_gphy_fw_load(struct gswip_priv *priv, struct gswip_gphy_fw *gphy_fw)
+ {
+ 	struct device *dev = priv->dev;
+@@ -1713,6 +1758,11 @@
+ 	 */
+ 	msleep(200);
+ 
++	if (gphy_fw->fw_mem.flags && !gswip_gphy_fw_mem_check(priv, gphy_fw)) {
++		dev_addr = gphy_fw->fw_mem.start;
++		goto boot;
++	}
++
+ 	ret = request_firmware(&fw, gphy_fw->fw_name, dev);
+ 	if (ret)
+ 		return dev_err_probe(dev, ret, "failed to load firmware: %s\n",
+@@ -1735,6 +1785,7 @@
+ 
+ 	release_firmware(fw);
+ 
++boot:
+ 	ret = regmap_write(priv->rcu_regmap, gphy_fw->fw_addr_offset, dev_addr);
+ 	if (ret)
+ 		return ret;
+@@ -1782,6 +1833,11 @@
+ 				     gphy_mode);
+ 	}
+ 
++	/* optional, falls back to request_firmware() */
++	ret = of_reserved_mem_region_to_resource(gphy_fw_np, 0, &gphy_fw->fw_mem);
++	if (ret && ret != -ENODEV)
++		dev_warn(dev, "GPHY firmware memory-region: %pe\n", ERR_PTR(ret));
++
+ 	gphy_fw->reset = of_reset_control_array_get_exclusive(gphy_fw_np);
+ 	if (IS_ERR(gphy_fw->reset))
+ 		return dev_err_probe(dev, PTR_ERR(gphy_fw->reset),

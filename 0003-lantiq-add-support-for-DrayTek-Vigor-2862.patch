@@ -1,0 +1,899 @@
+From 2c9dd9c909a26478cc398c0060cd3e6f41327840 Mon Sep 17 00:00:00 2001
+From: Gregory Dymarek <gregd72002@gmail.com>
+Date: Mon, 26 Oct 2026 22:08:11 +0000
+Subject: [PATCH 3/3] lantiq: add support for DrayTek Vigor 2862
+
+Hardware:
+- SoC:      Lantiq xRX330 (GRX369, part 0x011, v1.1), MIPS 34Kc @ 600 MHz
+            (2 VPEs)
+- RAM:      128 MiB (top 1 MiB not used by Linux, holds the GPHY
+            firmware copy)
+- NAND:     128 MiB, Toshiba TC58NVG0S3E
+- SPI-NOR:  256 KiB, MX25L2005 (DrayBoot bootloader and board data)
+- Ethernet: 1x WAN (WAN2) on an AR8035 attached via RGMII,
+            4x LAN on the SoC GPHYs
+- DSL:      VDSL2/ADSL2+ (VRX318 on PCIe), not supported
+- USB:      2x USB 2.0
+- Buttons:  reset
+- LEDs:     ACT, USB1, USB2, WAN2, DSL, QoS, WCF, VPN, DMZ, port LEDs
+- Serial:   115200 8N1
+
+Boot:
+DrayBoot (SPI-NOR) loads 512 KiB from its NAND firmware slot at
+0x1380000 and jumps to it. OpenWrt places a RAM-boot U-Boot there,
+which boots the kernel from 0x1480000; the rootfs is UBI from
+0x1880000 up to DrayBoot's backup slot at 0x3380000, so the stock
+firmware kept there is preserved for recovery. The layout is the same
+as on the Vigor 2860.
+
+The GPHYs run from the firmware copy DrayBoot leaves in RAM; U-Boot
+moves it to a reserved region and the switch driver boots the GPHYs
+from it.
+
+Front panel LAN1-LAN4 are switch ports 1, 4, 2 and 3; the port labels
+and LEDs follow the panel.
+
+Installation:
+1. Enter the DrayBoot TFTP recovery
+2. Set the computer to 192.168.1.2/24 and connect it to LAN1
+3. Rename the factory image
+   openwrt-lantiq-xrx200-draytek_vigor2862-squashfs-factory.bin to
+   v2862x.bin. DrayBoot only accepts images whose name starts with the
+   model; the character before .bin selects the action: '0' boots the
+   image from memory, any other character writes it to NAND.
+4. Upload the factory image:
+   tftp -m binary 192.168.1.1 -c put v2862x.bin
+5. DrayBoot writes the image to the primary firmware slot and boots
+   OpenWrt; the backup slot keeps the stock firmware
+
+Revert to stock:
+DrayBoot verifies the primary slot checksum on every boot and restores
+the backup slot (stock firmware) on a mismatch.
+
+MAC addresses:
+LAN   00:1d:aa:xx:xx:88  SPI-NOR 0x3fff8
+WAN   +2
+
+Assisted-by: Claude
+Signed-off-by: Gregory Dymarek <gregd72002@gmail.com>
+---
+ target/linux/lantiq/dts/xrx330.dtsi           | 315 ++++++++++++++
+ .../lantiq/dts/xrx330_draytek_vigor2862.dts   | 388 ++++++++++++++++++
+ target/linux/lantiq/image/Makefile            |   2 +-
+ target/linux/lantiq/image/vr9.mk              |  21 +-
+ .../xrx200/base-files/etc/board.d/01_leds     |  12 +
+ .../xrx200/base-files/etc/board.d/02_network  |   6 +-
+ .../xrx200/base-files/lib/upgrade/platform.sh |   1 +
+ 7 files changed, 742 insertions(+), 3 deletions(-)
+ create mode 100644 target/linux/lantiq/dts/xrx330.dtsi
+ create mode 100644 target/linux/lantiq/dts/xrx330_draytek_vigor2862.dts
+
+diff --git a/target/linux/lantiq/dts/xrx330.dtsi b/target/linux/lantiq/dts/xrx330.dtsi
+new file mode 100644
+index 0000000000..21402d8a23
+--- /dev/null
++++ b/target/linux/lantiq/dts/xrx330.dtsi
+@@ -0,0 +1,315 @@
++// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
++
++/dts-v1/;
++
++/*
++ * Lantiq xRX330 (GRX390 family). Derived from vr9.dtsi; only the blocks
++ * needed to boot to a shell are described so far. Differences from VR9:
++ * the EBU is at 0x16000000, the ASC1 interrupts are 111-114 and its
++ * interrupt bits follow the xRX330 layout.
++ */
++
++#include <dt-bindings/gpio/gpio.h>
++
++/ {
++	#address-cells = <1>;
++	#size-cells = <1>;
++	compatible = "lantiq,xway", "lantiq,grx390";
++
++	aliases {
++		serial0 = &asc1;
++	};
++
++	chosen {
++		stdout-path = "serial0:115200n8";
++	};
++
++	cpus {
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		cpu@0 {
++			compatible = "mips,mips34Kc";
++			reg = <0>;
++		};
++	};
++
++	reboot {
++		compatible = "syscon-reboot";
++
++		regmap = <&rcu0>;
++		offset = <0x10>;
++		mask = <0xe0000000>;
++	};
++
++	biu@1f800000 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		compatible = "lantiq,biu", "simple-bus";
++		reg = <0x1f800000 0x800000>;
++		ranges = <0x0 0x1f800000 0x7fffff>;
++
++		icu0: icu@80200 {
++			#interrupt-cells = <1>;
++			interrupt-controller;
++			compatible = "lantiq,icu";
++			reg = <0x80200 0xc8>,	/* icu0 */
++			      <0x80300 0xc8>;	/* icu1 */
++		};
++
++		watchdog@803f0 {
++			compatible = "lantiq,xrx100-wdt";
++			reg = <0x803f0 0x10>;
++
++			regmap = <&rcu0>;
++		};
++	};
++
++	sram@1f000000 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		compatible = "lantiq,sram", "simple-bus";
++		reg = <0x1f000000 0x800000>;
++		ranges = <0x0 0x1f000000 0x7fffff>;
++
++		pmu0: pmu@102000 {
++			compatible = "lantiq,pmu-xway";
++			reg = <0x102000 0x1000>;
++		};
++
++		cgu0: cgu@103000 {
++			compatible = "lantiq,cgu-xway";
++			reg = <0x103000 0x1000>;
++		};
++
++		rcu0: rcu@203000 {
++			#address-cells = <1>;
++			#size-cells = <1>;
++			compatible = "lantiq,xrx200-rcu", "simple-mfd", "syscon";
++			reg = <0x203000 0x300>;	/* GPHY3 FW address at 0x264 */
++			ranges = <0x0 0x203000 0x300>;
++			big-endian;
++
++			reset0: reset-controller@10 {
++				compatible = "lantiq,xrx200-reset";
++				reg = <0x10 4>, <0x14 4>;
++
++				#reset-cells = <2>;
++			};
++
++			reset1: reset-controller@48 {
++				compatible = "lantiq,xrx200-reset";
++				reg = <0x48 4>, <0x24 4>;
++
++				#reset-cells = <2>;
++			};
++
++			usb_phy0: usb2-phy@18 {
++				compatible = "lantiq,xrx300-usb2-phy";
++				reg = <0x18 4>, <0x38 4>;
++				status = "disabled";
++
++				resets = <&reset1 4 4>, <&reset0 4 4>;
++				reset-names = "phy", "ctrl";
++				#phy-cells = <0>;
++			};
++
++			usb_phy1: usb2-phy@34 {
++				compatible = "lantiq,xrx300-usb2-phy";
++				reg = <0x34 4>, <0x3c 4>;
++				status = "disabled";
++
++				resets = <&reset1 5 5>, <&reset0 4 4>;
++				reset-names = "phy", "ctrl";
++				#phy-cells = <0>;
++			};
++		};
++	};
++
++	fpi@10000000 {
++		compatible = "simple-bus";
++		ranges = <0x0 0x10000000 0xf000000>;
++		#address-cells = <1>;
++		#size-cells = <1>;
++
++		localbus: localbus@0 {
++			#address-cells = <2>;
++			#size-cells = <1>;
++			ranges = <0 0 0x0000000 0x3ffffff>, /* addrsel0 */
++				 <1 0 0x4000000 0x4000010>; /* addsel1 */
++			compatible = "lantiq,localbus", "simple-bus";
++		};
++
++		ebu0: ebu@6000000 {
++			compatible = "lantiq,ebu-xway";
++			reg = <0x6000000 0x100>;
++		};
++
++		gpio: pinmux@e100b10 {
++			compatible = "lantiq,xrx300-pinctrl";
++			#gpio-cells = <2>;
++			gpio-controller;
++			gpio-ranges = <&gpio 0 0 64>;
++			reg = <0xe100b10 0xa0>;
++		};
++
++		dma0: dma@e104100 {
++			compatible = "lantiq,dma-xway";
++			reg = <0xe104100 0x800>;
++		};
++
++		gswip: switch@e108000 {
++			compatible = "lantiq,xrx330-gswip";
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <0xe108000 0x3000>, /* switch */
++			      <0xe10b100 0x70>,	  /* mdio */
++			      <0xe10b1d8 0x30>;	  /* mii */
++
++			dsa,member = <0 0>;
++
++			gswip_ports: ports {
++				#address-cells = <1>;
++				#size-cells = <0>;
++
++				port@6 {
++					reg = <0x6>;
++					phy-mode = "internal";
++					ethernet = <&eth0>;
++
++					fixed-link {
++						speed = <1000>;
++						full-duplex;
++					};
++				};
++			};
++
++			gswip_mdio: mdio {
++				#address-cells = <1>;
++				#size-cells = <0>;
++				compatible = "lantiq,xrx200-mdio";
++			};
++
++			gphy-fw {
++				compatible = "lantiq,xrx330-gphy-fw", "lantiq,gphy-fw";
++				lantiq,rcu = <&rcu0>;
++				#address-cells = <1>;
++				#size-cells = <0>;
++
++				gphy0: gphy@20 {
++					reg = <0x20>;
++
++					resets = <&reset0 31 30>;
++					reset-names = "gphy";
++				};
++
++				gphy1: gphy@58 {
++					reg = <0x58>;
++
++					resets = <&reset0 29 28>;
++					reset-names = "gphy";
++				};
++
++				gphy2: gphy@ac {
++					reg = <0xac>;
++
++					resets = <&reset0 28 13>;
++					reset-names = "gphy";
++				};
++
++				gphy3: gphy@264 {
++					reg = <0x264>;
++
++					resets = <&reset0 10 10>;
++					reset-names = "gphy";
++				};
++			};
++		};
++
++		eth0: eth@e10b308 {
++			compatible = "lantiq,xrx200-net";
++			reg = <0xe10b308 0x30>; /* pmac */
++			interrupt-parent = <&icu0>;
++			interrupts = <73>, <72>;
++			interrupt-names = "tx", "rx";
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			fixed-link {
++				speed = <1000>;
++				full-duplex;
++			};
++		};
++
++		spi: spi@e100800 {
++			compatible = "lantiq,xrx200-spi", "lantiq,xrx100-spi";
++			reg = <0xe100800 0x100>;
++			interrupt-parent = <&icu0>;
++			interrupts = <22 23 24>;
++			interrupt-names = "spi_rx", "spi_tx", "spi_err",
++					  "spi_frm";
++			#address-cells = <1>;
++			#size-cells = <0>;
++			status = "disabled";
++		};
++
++		stp: gpio@e100bb0 {
++			compatible = "lantiq,gpio-stp-xway";
++			reg = <0xe100bb0 0x40>;
++			#gpio-cells = <2>;
++			gpio-controller;
++
++			lantiq,shadow = <0xffffff>;
++			lantiq,groups = <0x7>;
++			lantiq,dsl = <0x0>;
++			lantiq,phy1 = <0x0>;
++			lantiq,phy2 = <0x0>;
++			lantiq,phy3 = <0x0>;
++			lantiq,phy4 = <0x0>;
++			status = "disabled";
++		};
++
++		usb0: usb@e101000 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			status = "disabled";
++			compatible = "lantiq,xrx300-usb";
++			reg = <0xe101000 0x1000>;
++			interrupt-parent = <&icu0>;
++			interrupts = <62>;
++			dr_mode = "host";
++			phys = <&usb_phy0>;
++			phy-names = "usb2-phy";
++
++			usb0_port1: port@1 {
++				reg = <1>;
++				#trigger-source-cells = <0>;
++			};
++		};
++
++		usb1: usb@e106000 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			status = "disabled";
++			compatible = "lantiq,xrx300-usb";
++			reg = <0xe106000 0x1000>;
++			interrupt-parent = <&icu0>;
++			interrupts = <91>;
++			dr_mode = "host";
++			phys = <&usb_phy1>;
++			phy-names = "usb2-phy";
++
++			usb1_port1: port@1 {
++				reg = <1>;
++				#trigger-source-cells = <0>;
++			};
++		};
++
++		asc1: serial@e100c00 {
++			compatible = "lantiq,xrx330-asc";
++			reg = <0xe100c00 0x400>;
++			interrupt-parent = <&icu0>;
++			interrupts = <111 113 114>;
++		};
++	};
++};
+diff --git a/target/linux/lantiq/dts/xrx330_draytek_vigor2862.dts b/target/linux/lantiq/dts/xrx330_draytek_vigor2862.dts
+new file mode 100644
+index 0000000000..f6f1a0137f
+--- /dev/null
++++ b/target/linux/lantiq/dts/xrx330_draytek_vigor2862.dts
+@@ -0,0 +1,388 @@
++// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
++
++#include "xrx330.dtsi"
++
++#include <dt-bindings/input/input.h>
++#include <dt-bindings/leds/common.h>
++
++/ {
++	compatible = "draytek,vigor2862", "lantiq,xway", "lantiq,grx390";
++	model = "DrayTek Vigor 2862";
++
++	chosen {
++		bootargs = "console=ttyLTQ0,115200";
++	};
++
++	aliases {
++		led-boot = &led_act;
++		led-failsafe = &led_act;
++		led-running = &led_act;
++		led-upgrade = &led_act;
++		led-dsl = &led_dsl;
++	};
++
++	keys {
++		compatible = "gpio-keys-polled";
++		poll-interval = <100>;
++
++		reset {
++			label = "reset";
++			gpios = <&gpio 11 GPIO_ACTIVE_LOW>;
++			linux,code = <KEY_RESTART>;
++			debounce-interval = <60>;
++		};
++	};
++
++	/* panel LEDs on the STP, active low */
++	leds {
++		compatible = "gpio-leds";
++
++		led-dmz {
++			function = "dmz";
++			color = <LED_COLOR_ID_GREEN>;
++			gpios = <&stp 13 GPIO_ACTIVE_LOW>;
++		};
++
++		led-wcf {
++			function = "wcf";
++			color = <LED_COLOR_ID_GREEN>;
++			gpios = <&stp 14 GPIO_ACTIVE_LOW>;
++		};
++
++		led-qos {
++			function = "qos";
++			color = <LED_COLOR_ID_GREEN>;
++			gpios = <&stp 15 GPIO_ACTIVE_LOW>;
++		};
++
++		led-vpn {
++			function = "vpn";
++			color = <LED_COLOR_ID_GREEN>;
++			gpios = <&stp 16 GPIO_ACTIVE_LOW>;
++		};
++
++		led_dsl: led-dsl {
++			function = "dsl";
++			color = <LED_COLOR_ID_GREEN>;
++			gpios = <&stp 19 GPIO_ACTIVE_LOW>;
++		};
++
++		led-wan2-online {
++			function = LED_FUNCTION_WAN_ONLINE;
++			function-enumerator = <2>;
++			color = <LED_COLOR_ID_GREEN>;
++			gpios = <&stp 20 GPIO_ACTIVE_LOW>;
++		};
++
++		led-usb2 {
++			function = LED_FUNCTION_USB;
++			function-enumerator = <2>;
++			color = <LED_COLOR_ID_GREEN>;
++			gpios = <&stp 21 GPIO_ACTIVE_LOW>;
++			trigger-sources = <&usb1_port1>;
++			linux,default-trigger = "usbport";
++		};
++
++		led-usb1 {
++			function = LED_FUNCTION_USB;
++			function-enumerator = <1>;
++			color = <LED_COLOR_ID_GREEN>;
++			gpios = <&stp 22 GPIO_ACTIVE_LOW>;
++			trigger-sources = <&usb0_port1>;
++			linux,default-trigger = "usbport";
++		};
++
++		led_act: led-act {
++			function = LED_FUNCTION_STATUS;
++			color = <LED_COLOR_ID_GREEN>;
++			gpios = <&stp 23 GPIO_ACTIVE_LOW>;
++		};
++	};
++
++	memory@0 {
++		device_type = "memory";
++		/* top 1 MiB is used by the vendor firmware, keep it untouched */
++		reg = <0x0 0x7f00000>;
++	};
++
++	reserved-memory {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		ranges;
++
++		/* U-Boot copies DrayBoot's GPHY firmware here */
++		gphy_fw_mem: gphy-firmware@7fe0000 {
++			reg = <0x7fe0000 0x20000>;
++			no-map;
++		};
++	};
++};
++
++/*
++ * The GPHYs run their firmware from RAM. DrayBoot leaves it at 0x200000,
++ * inside the kernel's memory; U-Boot copies it to gphy_fw_mem.
++ */
++&gphy0 {
++	memory-region = <&gphy_fw_mem>;
++};
++
++&gphy1 {
++	memory-region = <&gphy_fw_mem>;
++};
++
++&gphy2 {
++	memory-region = <&gphy_fw_mem>;
++};
++
++&gphy3 {
++	memory-region = <&gphy_fw_mem>;
++};
++
++
++/*
++ * Front panel LAN1-LAN4 = switch ports (MDIO) 1, 4, 2, 3; the GPHY LEDs follow the jacks.
++ */
++&gswip_mdio {
++	phy1: ethernet-phy@1 {
++		reg = <0x1>;
++
++		leds {
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			led@0 {
++				reg = <0>;
++				function = LED_FUNCTION_ACTIVITY;
++				function-enumerator = <1>;
++				color = <LED_COLOR_ID_GREEN>;
++			};
++
++			led@1 {
++				reg = <1>;
++				function = LED_FUNCTION_LAN;
++				function-enumerator = <1>;
++				color = <LED_COLOR_ID_GREEN>;
++			};
++		};
++	};
++
++	phy2: ethernet-phy@2 {
++		reg = <0x2>;
++
++		leds {
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			led@0 {
++				reg = <0>;
++				function = LED_FUNCTION_ACTIVITY;
++				function-enumerator = <3>;
++				color = <LED_COLOR_ID_GREEN>;
++			};
++
++			led@1 {
++				reg = <1>;
++				function = LED_FUNCTION_LAN;
++				function-enumerator = <3>;
++				color = <LED_COLOR_ID_GREEN>;
++			};
++		};
++	};
++
++	phy3: ethernet-phy@3 {
++		reg = <0x3>;
++
++		leds {
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			led@0 {
++				reg = <0>;
++				function = LED_FUNCTION_ACTIVITY;
++				function-enumerator = <4>;
++				color = <LED_COLOR_ID_GREEN>;
++			};
++
++			led@1 {
++				reg = <1>;
++				function = LED_FUNCTION_LAN;
++				function-enumerator = <4>;
++				color = <LED_COLOR_ID_GREEN>;
++			};
++		};
++	};
++
++	phy4: ethernet-phy@4 {
++		reg = <0x4>;
++
++		leds {
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			led@0 {
++				reg = <0>;
++				function = LED_FUNCTION_ACTIVITY;
++				function-enumerator = <2>;
++				color = <LED_COLOR_ID_GREEN>;
++			};
++
++			led@1 {
++				reg = <1>;
++				function = LED_FUNCTION_LAN;
++				function-enumerator = <2>;
++				color = <LED_COLOR_ID_GREEN>;
++			};
++		};
++	};
++
++	/* AR8035, WAN2 */
++	phy7: ethernet-phy@7 {
++		reg = <0x7>;
++	};
++};
++
++&gswip_ports {
++	port@0 {
++		reg = <0>;
++		label = "wan";
++		phy-mode = "rgmii-id";
++		phy-handle = <&phy7>;
++		nvmem-cells = <&macaddr_drayboot_3fff8 2>;
++		nvmem-cell-names = "mac-address";
++	};
++
++	port@1 {
++		reg = <1>;
++		label = "lan1";
++		phy-mode = "internal";
++		phy-handle = <&phy1>;
++	};
++
++	port@2 {
++		reg = <2>;
++		label = "lan3";
++		phy-mode = "internal";
++		phy-handle = <&phy2>;
++	};
++
++	port@3 {
++		reg = <3>;
++		label = "lan4";
++		phy-mode = "internal";
++		phy-handle = <&phy3>;
++	};
++
++	port@4 {
++		reg = <4>;
++		label = "lan2";
++		phy-mode = "internal";
++		phy-handle = <&phy4>;
++	};
++};
++
++&localbus {
++	flash@1 {
++		compatible = "lantiq,nand-xway";
++		lantiq,cs = <1>;
++		bank-width = <2>;
++		reg = <1 0x0 0x2000000>;
++
++		nand-use-soft-ecc-engine;
++
++		partitions {
++			compatible = "fixed-partitions";
++			#address-cells = <1>;
++			#size-cells = <1>;
++
++			partition@0 {
++				label = "drayboot-vendor";
++				reg = <0x0 0x1380000>;
++				read-only;
++			};
++
++			/* DrayBoot primary firmware slot, holds U-Boot */
++			partition@1380000 {
++				label = "u-boot";
++				reg = <0x1380000 0x100000>;
++				read-only;
++			};
++
++			partition@1480000 {
++				label = "kernel";
++				reg = <0x1480000 0x400000>;
++			};
++
++			/* ends at the DrayBoot backup slot, kept for recovery */
++			partition@1880000 {
++				label = "ubi";
++				reg = <0x1880000 0x1b00000>;
++			};
++		};
++	};
++};
++
++&eth0 {
++	nvmem-cells = <&macaddr_drayboot_3fff8 0>;
++	nvmem-cell-names = "mac-address";
++};
++
++/* pinmux and chip selects are left as DrayBoot set them up */
++&spi {
++	status = "okay";
++
++	flash@1 {
++		compatible = "jedec,spi-nor";
++		reg = <1>;
++		spi-max-frequency = <10000000>;
++
++		partitions {
++			compatible = "fixed-partitions";
++			#address-cells = <1>;
++			#size-cells = <1>;
++
++			/* DrayBoot, its GPHY firmware and the board data */
++			partition@0 {
++				label = "drayboot-spi";
++				reg = <0x0 0x40000>;
++				read-only;
++
++				nvmem-layout {
++					compatible = "fixed-layout";
++					#address-cells = <1>;
++					#size-cells = <1>;
++
++					macaddr_drayboot_3fff8: macaddr@3fff8 {
++						compatible = "mac-base";
++						reg = <0x3fff8 0x6>;
++						#nvmem-cell-cells = <1>;
++					};
++				};
++			};
++		};
++	};
++};
++
++/* GPHY LEDs: STP outputs 2-3, 5-6, 8-9 and 11-12 are driven by the GPHYs */
++&stp {
++	status = "okay";
++	lantiq,phy1 = <0x3>;
++	lantiq,phy2 = <0x3>;
++	lantiq,phy3 = <0x3>;
++	lantiq,phy4 = <0x3>;
++};
++
++&usb0 {
++	status = "okay";
++};
++
++&usb1 {
++	status = "okay";
++};
++
++&usb_phy0 {
++	status = "okay";
++};
++
++&usb_phy1 {
++	status = "okay";
++};
+diff --git a/target/linux/lantiq/image/Makefile b/target/linux/lantiq/image/Makefile
+index 7fd3b34878..cae580913b 100644
+--- a/target/linux/lantiq/image/Makefile
++++ b/target/linux/lantiq/image/Makefile
+@@ -27,7 +27,7 @@ endef
+ 
+ define Build/draytek-factory
+ 	$(STAGING_DIR_HOST)/bin/draytek-drayboot \
+-		-u $(STAGING_DIR_IMAGE)/vigor2860_ram-u-boot.bin \
++		-u $(STAGING_DIR_IMAGE)/$(1)-u-boot.bin \
+ 		-k $(IMAGE_KERNEL) -r $@ -o $@.new
+ 	mv $@.new $@
+ endef
+diff --git a/target/linux/lantiq/image/vr9.mk b/target/linux/lantiq/image/vr9.mk
+index 891bdbc1bf..164faf4444 100644
+--- a/target/linux/lantiq/image/vr9.mk
++++ b/target/linux/lantiq/image/vr9.mk
+@@ -345,7 +345,7 @@ define Device/draytek_vigor2860
+   IMAGE_SIZE := 27392k
+   UBINIZE_OPTS := -E 5
+   IMAGES += factory.bin
+-  IMAGE/factory.bin := append-ubi | draytek-factory
++  IMAGE/factory.bin := append-ubi | draytek-factory vigor2860_ram
+   DEVICE_PACKAGES := kmod-dsa-qca8k kmod-phy-qca83xx kmod-usb-dwc2 \
+ 	xrx200-rev1.2-phy11g-firmware kmod-ath10k ath10k-firmware-qca988x \
+ 	rt2800-pci-firmware kmod-rt2800-pci \
+@@ -353,6 +353,25 @@ define Device/draytek_vigor2860
+ endef
+ TARGET_DEVICES += draytek_vigor2860
+ 
++define Device/draytek_vigor2862
++  $(Device/dsa-migration)
++  $(Device/NAND)
++  DEVICE_VENDOR := DrayTek
++  DEVICE_MODEL := Vigor 2862
++  SOC := xrx330
++  KERNEL_SIZE := 4096k
++  IMAGE_SIZE := 27392k
++  UBINIZE_OPTS := -E 5
++  IMAGES += factory.bin
++  IMAGE/factory.bin := append-ubi | draytek-factory vigor2862_ram
++  DEVICE_PACKAGES := -kmod-ltq-vdsl-vr9-mei -kmod-ltq-vdsl-vr9 \
++	-kmod-ltq-atm-vr9 -kmod-ltq-deu-vr9 -kmod-ltq-ptm-vr9 \
++	-ltq-vdsl-vr9-app -ltq-vdsl-vr9-vectoring-fw-installer \
++	-dsl-vrx200-firmware-xdsl-a -dsl-vrx200-firmware-xdsl-b-patch \
++	-ppp-mod-pppoa kmod-usb-dwc2 kmod-usb-ledtrig-usbport
++endef
++TARGET_DEVICES += draytek_vigor2862
++
+ define Device/lantiq_easy80920-nand
+   $(Device/dsa-migration)
+   $(Device/lantiqFullImage)
+diff --git a/target/linux/lantiq/xrx200/base-files/etc/board.d/01_leds b/target/linux/lantiq/xrx200/base-files/etc/board.d/01_leds
+index ab8e7c31f0..53a7692378 100644
+--- a/target/linux/lantiq/xrx200/base-files/etc/board.d/01_leds
++++ b/target/linux/lantiq/xrx200/base-files/etc/board.d/01_leds
+@@ -81,6 +81,18 @@ draytek,vigor2860)
+ 		ucidef_set_led_netdev "lan${i}_act" "LAN$i act" "$p:green:activity-$i" "lan$i" "tx rx"
+ 	done
+ 	;;
++draytek,vigor2862)
++	ucidef_set_led_usbport "usb1" "USB1" "green:usb-1" "usb1-port1"
++	ucidef_set_led_usbport "usb2" "USB2" "green:usb-2" "usb2-port1"
++	ucidef_set_led_netdev "wan2" "WAN2" "green:wan-online-2" "wan" "link tx rx"
++	# panel LANi:MDIO address of its GPHY
++	for m in 1:1 2:4 3:2 4:3; do
++		i=${m%:*}
++		p="1e108000.switch-mii:0${m#*:}"
++		ucidef_set_led_netdev "lan${i}_link" "LAN$i link" "$p:green:lan-$i" "lan$i" "link"
++		ucidef_set_led_netdev "lan${i}_act" "LAN$i act" "$p:green:activity-$i" "lan$i" "link tx rx"
++	done
++	;;
+ esac
+ 
+ board_config_flush
+diff --git a/target/linux/lantiq/xrx200/base-files/etc/board.d/02_network b/target/linux/lantiq/xrx200/base-files/etc/board.d/02_network
+index 3137fc8ff0..9a17e676f9 100644
+--- a/target/linux/lantiq/xrx200/base-files/etc/board.d/02_network
++++ b/target/linux/lantiq/xrx200/base-files/etc/board.d/02_network
+@@ -50,6 +50,9 @@ lantiq_setup_interfaces()
+ 	draytek,vigor2860)
+ 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4 lan5 lan6" "wan"
+ 		;;
++	draytek,vigor2862)
++		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4" "wan"
++		;;
+ 	*)
+ 		ucidef_set_interface_lan 'eth0'
+ 		;;
+@@ -78,7 +81,8 @@ lantiq_setup_dsl()
+ 		annex="b"
+ 		;;
+ 	avm,fritz5490|\
+-	avm,fritz5490-micron)
++	avm,fritz5490-micron|\
++	draytek,vigor2862)
+ 		return
+ 		;;
+ 	esac
+diff --git a/target/linux/lantiq/xrx200/base-files/lib/upgrade/platform.sh b/target/linux/lantiq/xrx200/base-files/lib/upgrade/platform.sh
+index 58bfd02799..7e16c20467 100755
+--- a/target/linux/lantiq/xrx200/base-files/lib/upgrade/platform.sh
++++ b/target/linux/lantiq/xrx200/base-files/lib/upgrade/platform.sh
+@@ -24,6 +24,7 @@ platform_do_upgrade() {
+ 	avm,fritz7490-micron|\
+ 	bt,homehub-v5a|\
+ 	draytek,vigor2860|\
++	draytek,vigor2862|\
+ 	zyxel,p-2812hnu-f1|\
+ 	zyxel,p-2812hnu-f3)
+ 		nand_do_upgrade $1
+-- 
+2.43.0
+

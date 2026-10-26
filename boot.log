@@ -1,0 +1,299 @@
+
+ROM VER: 1.0.0
+CFG 05
+
+ROM VER: 1.0.0
+CFG 05
+
+Starting DDR tuning ...
+DDR tuning range is [0xa0000000 - 0xa3ffffff]
+SDRAM testing pass ... start booting...
+
+
+
+Vigor2862-DrayBoot-v23
+
+CLOCK CPU 600Mhz, RAM 300Mhz
+16 Bit RAM, 128 MB
+NAND Flash : VID: 0x98, PID: 0xd1 (Toshiba NAND 128MB 3,3V 8-bit)
+Bad block table at page 65472 (ver=01)
+Bad block table at page 65408 (ver=01)
+Clock of internal PHY is 25Mhz
+Firmware version of Internal GPHY is: 0x8435
+
+
+Can not detect XRA1403 !!
+Size of SPI Flash is : 256 KB MX25L200 series
+
+Can not detect XRA1403 !!
+
+
+Boot DrayOS~~
+Go~~
+
+
+U-Boot 2013.10-openwrt4 (Oct 25 2026 - 14:46:18) Vigor2862
+
+Board: DrayTek Vigor 2862
+SoC:   Lantiq GRX369 v1.1
+CPU:   600 MHz
+IO:    300 MHz
+BUS:   300 MHz
+BOOT:  SPI
+DRAM:  128 MiB
+NAND:  128 MiB
+Using default environment
+
+In:    serial
+Out:   serial
+Err:   serial
+DRAYBOOT: image length = 0x00080104
+GPHY:  firmware saved at 0x07fe0000, crc32 d1b6e5fc
+Hit any key to stop autoboot:  2  1  0
+
+NAND read: device 0 offset 0x1480000, size 0x400000
+ 4194304 bytes read: OK
+## Booting kernel from Legacy Image at 82000000 ...
+   Image Name:   MIPS OpenWrt Linux-6.18.55
+   Created:      2026-10-25  14:46:18 UTC
+   Image Type:   MIPS Linux Kernel Image (lzma compressed)
+   Data Size:    3477040 Bytes = 3.3 MiB
+   Load Address: 80002000
+   Entry Point:  80002000
+   Verifying Checksum ... OK
+   Uncompressing Kernel Image ... OK
+
+Starting kernel ...
+
+[    0.000000] Linux version 6.18.55 (home@home-pc) (mips-openwrt-linux-musl-gcc (OpenWrt GCC 14.4.0 toolchain-55f076e4f3) 14.4.0, GNU ld (GNU Binutils) 2.46.1) #0 SMP Sun Oct 25 14:46:18 2026
+[    0.000000] SoC: xRX330 rev 1.1
+[    0.000000] printk: legacy bootconsole [early0] enabled
+[    0.000000] CPU0 revision is: 00019556 (MIPS 34Kc)
+[    0.000000] MIPS: machine is DrayTek Vigor 2862
+[    0.000000] Initrd not found or empty - disabling initrd
+[    0.000000] OF: reserved mem: 0x07fe0000..0x07ffffff (128 KiB) nomap non-reusable gphy-firmware@7fe0000
+[    0.000000] Detected 1 available secondary CPU(s)
+[    0.000000] Primary instruction cache 32kB, VIPT, 4-way, linesize 32 bytes.
+[    0.000000] Primary data cache 32kB, 4-way, VIPT, cache aliases, linesize 32 bytes
+[    0.000000] Zone ranges:
+[    0.000000]   Normal   [mem 0x0000000000000000-0x0000000007efffff]
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000000000000-0x0000000007efffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000000000000-0x0000000007efffff]
+[    0.000000] On node 0, zone Normal: 256 pages in unavailable ranges
+[    0.000000] percpu: Embedded 12 pages/cpu s18256 r8192 d22704 u49152
+[    0.000000] Kernel command line: console=ttyLTQ0,115200
+[    0.000000] printk: log buffer data + meta data: 131072 + 409600 = 540672 bytes
+[    0.000000] Dentry cache hash table entries: 16384 (order: 4, 65536 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 8192 (order: 3, 32768 bytes, linear)
+[    0.000000] Writing ErrCtl register=00025040
+[    0.000000] Readback ErrCtl register=00025040
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 32512
+[    0.000000] mem auto-init: stack:off, heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=32, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 10 jiffies.
+[    0.000000] RCU Tasks Trace: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] NR_IRQS: 256
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.000000] CPU Clock: 600MHz
+[    0.000000] clocksource: MIPS: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 6370868154 ns
+[    0.000000] sched_clock: 32 bits at 100 Hz, resolution 10000000ns, wraps every 21474836475000000ns
+[    0.010000] Calibrating delay loop... 398.13 BogoMIPS (lpj=1990656)
+[    0.070000] pid_max: default: 32768 minimum: 301
+[    0.090000] Mount-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)
+[    0.100000] Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)
+[    0.130000] rcu: Hierarchical SRCU implementation.
+[    0.130000] rcu: 	Max phase no-delay instances is 1000.
+[    0.140000] smp: Bringing up secondary CPUs ...
+[    0.140000] Primary instruction cache 32kB, VIPT, 4-way, linesize 32 bytes.
+[    0.140000] Primary data cache 32kB, 4-way, VIPT, cache aliases, linesize 32 bytes
+[    0.140000] CPU1 revision is: 00019556 (MIPS 34Kc)
+[    0.200000] Counter synchronization [CPU#0 -> CPU#1]: passed
+[    0.210000] smp: Brought up 1 node, 2 CPUs
+[    0.210000] Memory: 115004K/130048K available (8753K kernel code, 649K rwdata, 1856K rodata, 1268K init, 220K bss, 14176K reserved, 0K cma-reserved)
+[    0.220000] posixtimers hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.230000] futex hash table entries: 512 (16384 bytes on 1 NUMA nodes, total 16 KiB, linear).
+[    0.240000] pinctrl core: initialized pinctrl subsystem
+[    0.250000] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.270000] pinctrl-xway 1e100b10.pinmux: Init done
+[    0.280000] dma-xway 1e104100.dma: Init done - hw rev: 8, ports: 5, channels: 24
+[    0.300000] gpio-stp-xway 1e100bb0.gpio: Init done
+[    0.310000] usbcore: registered new interface driver usbfs
+[    0.310000] usbcore: registered new interface driver hub
+[    0.320000] usbcore: registered new device driver usb
+[    0.320000] clocksource: Switched to clocksource MIPS
+[    0.350000] NET: Registered PF_INET protocol family
+[    0.350000] IP idents hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    0.360000] tcp_listen_portaddr_hash hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.370000] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.380000] TCP established hash table entries: 1024 (order: 0, 4096 bytes, linear)
+[    0.380000] TCP bind hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[    0.390000] TCP: Hash tables configured (established 1024 bind 1024)
+[    0.400000] MPTCP token hash table entries: 256 (order: 0, 4096 bytes, linear)
+[    0.400000] UDP hash table entries: 256 (order: 2, 14336 bytes, linear)
+[    0.410000] UDP-Lite hash table entries: 256 (order: 2, 14336 bytes, linear)
+[    0.420000] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.430000] PCI: CLS 0 bytes, default 32
+[    0.430000] No VPEs reserved for AP/SP, not initialize VPE loader
+[    0.430000] Pass maxvpes=<n> argument as kernel argument
+[    0.440000] No TCs reserved for AP/SP, not initializing RTLX.
+[    0.440000] Pass maxtcs=<n> argument as kernel argument
+[    0.460000] workingset: timestamp_bits=14 max_order=15 bucket_order=1
+[    0.470000] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.470000] jffs2: version 2.2 (NAND) (SUMMARY) (LZMA) (RTIME) (CMODE_PRIORITY) (c) 2001-2006 Red Hat, Inc.
+[    0.500000] 1e100c00.serial: ttyLTQ0 at MMIO 0x1e100c00 (irq = 111, base_baud = 0) is a lantiq,asc
+[    0.510000] printk: legacy console [ttyLTQ0] enabled
+[    0.510000] printk: legacy console [ttyLTQ0] enabled
+[    0.520000] printk: legacy bootconsole [early0] disabled
+[    0.520000] printk: legacy bootconsole [early0] disabled
+[    0.540000] nand: device found, Manufacturer ID: 0x98, Chip ID: 0xd1
+[    0.540000] nand: Toshiba TC58NVG0S3E 1G 3.3V 8-bit
+[    0.540000] nand: 128 MiB, SLC, erase size: 128 KiB, page size: 2048, OOB size: 64
+[    0.550000] Scanning device for bad blocks
+[    0.630000] 4 fixed-partitions partitions found on MTD device 14000000.flash
+[    0.630000] Creating 4 MTD partitions on "14000000.flash":
+[    0.640000] 0x000000000000-0x000001380000 : "drayboot-vendor"
+[    0.650000] 0x000001380000-0x000001480000 : "u-boot"
+[    0.650000] 0x000001480000-0x000001880000 : "kernel"
+[    0.660000] 0x000001880000-0x000003380000 : "ubi"
+[    0.670000] spi-lantiq-ssc 1e100800.spi: Lantiq SSC SPI controller (Rev 9, TXFS 8, RXFS 8, DMA 1)
+[    0.680000] spi-nor spi0.1: supply vcc not found, using dummy regulator
+[    0.690000] 1 fixed-partitions partitions found on MTD device spi0.1
+[    0.690000] Creating 1 MTD partitions on "spi0.1":
+[    0.700000] 0x000000000000-0x000000040000 : "drayboot-spi"
+[    0.720000] NET: Registered PF_INET6 protocol family
+[    0.730000] Segment Routing with IPv6
+[    0.730000] In-situ OAM (IOAM) with IPv6
+[    0.730000] NET: Registered PF_PACKET protocol family
+[    0.740000] 8021q: 802.1Q VLAN Support v1.8
+[    0.800000] UBI: auto-attach mtd3
+[    0.810000] ubi0: attaching mtd3
+[    0.840000] ubi0: scanning is finished
+[    0.890000] ubi0: attached mtd3 (name "ubi", size 27 MiB)
+[    0.890000] ubi0: PEB size: 131072 bytes (128 KiB), LEB size: 129024 bytes
+[    0.900000] ubi0: min./max. I/O unit sizes: 2048/2048, sub-page size 512
+[    0.900000] ubi0: VID header offset: 512 (aligned 512), data offset: 2048
+[    0.910000] ubi0: good PEBs: 216, bad PEBs: 0, corrupted PEBs: 0
+[    0.920000] ubi0: user volume: 2, internal volumes: 1, max. volumes count: 128
+[    0.920000] ubi0: max/mean erase counter: 2/0, WL threshold: 4096, image sequence number: 1792939578
+[    0.930000] ubi0: available PEBs: 0, total reserved PEBs: 216, PEBs reserved for bad PEB handling: 20
+[    0.940000] ubi0: background thread "ubi_bgt0d" started, PID 308
+[    0.950000] block ubiblock0_0: created from ubi0:0(rootfs)
+[    0.950000] ubiblock: device ubiblock0_0 (rootfs) set to be root files[    0.960000] check access for rdinit=/init failed: -2, ignoring
+[    0.970000] VFS: Mounted root (squashfs filesystem) readonly on device 254:0.
+[    0.980000] Freeing unused kernel image (initmem) memory: 1268K
+[    0.990000] This architecture does not have kernel memory protection.
+[    0.990000] Run /sbin/init as init process
+[    1.840000] init: Console is alive
+[    1.840000] init: - watchdog -
+[    2.500000] kmodloader: loading kernel modules from /etc/modules-boot.d/*
+[    2.560000] gpio_button_hotplug: loading out-of-tree module taints kernel.
+[    2.580000] SCSI subsystem initialized
+[    4.410000] gswip 1e108000.switch: configuring for fixed/internal link mode
+[    4.410000] gswip 1e108000.switch: Link is Up - 1Gbps/Full - flow control off
+[    4.490000] gswip 1e108000.switch wan (uninitialized): PHY [1e108000.switch-mii:07] driver [Qualcomm Atheros AR8035] (irq=POLL)
+[    4.500000] gswip 1e108000.switch lan1 (uninitialized): PHY [1e108000.switch-mii:01] driver [Intel XWAY PHY11G (xRX v1.2 integrated)] (irq=POLL)
+[    4.510000] gswip 1e108000.switch lan3 (uninitialized): PHY [1e108000.switch-mii:02] driver [Intel XWAY PHY11G (xRX v1.2 integrated)] (irq=POLL)
+[    4.530000] gswip 1e108000.switch lan4 (uninitialized): PHY [1e108000.switch-mii:03] driver [Intel XWAY PHY11G (xRX v1.2 integrated)] (irq=POLL)
+[    4.540000] gswip 1e108000.switch lan2 (uninitialized): PHY [1e108000.switch-mii:04] driver [Intel XWAY PHY11G (xRX v1.2 integrated)] (irq=POLL)
+[    4.560000] lantiq,xrx200-net 1e10b308.eth eth0: entered promiscuous mode
+[    4.560000] DSA: tree 0 setup
+[    4.570000] gswip 1e108000.switch: probed GSWIP version 22 mod 1
+[    4.590000] dwc2 1e101000.usb: supply vusb_d not found, using dummy regulator
+[    4.590000] dwc2 1e101000.usb: supply vusb_a not found, using dummy regulator
+[    4.700000] dwc2 1e101000.usb: DWC OTG Controller
+[    4.710000] dwc2 1e101000.usb: new USB bus registered, assigned bus number 1
+[    4.710000] dwc2 1e101000.usb: irq 62, io mem 0x1e101000
+[    4.720000] hub 1-0:1.0: USB hub found
+[    4.720000] hub 1-0:1.0: 1 port detected
+[    4.730000] dwc2 1e106000.usb: supply vusb_d not found, using dummy regulator
+[    4.740000] dwc2 1e106000.usb: supply vusb_a not found, using dummy regulator
+[    4.840000] dwc2 1e106000.usb: DWC OTG Controller
+[    4.850000] dwc2 1e106000.usb: new USB bus registered, assigned bus number 2
+[    4.850000] dwc2 1e106000.usb: irq 91, io mem 0x1e106000
+[    4.860000] hub 2-0:1.0: USB hub found
+[    4.860000] hub 2-0:1.0: 1 port detected
+[    4.880000] usbcore: registered new interface driver usb-storage
+[    4.890000] kmodloader: done loading kernel modules from /etc/modules-boot.d/*
+[    4.900000] init: - preinit -
+[    8.520000] random: crng init done
+[    9.580000] gswip 1e108000.switch lan1: configuring for phy/internal link mode
+Press the [f] key and hit [enter] to enter failsafe mode
+Press the [1], [2], [3] or [4] key and hit [enter] to select the debug level
+[   13.760000] gswip 1e108000.switch lan1: Link is Up - 1Gbps/Full - flow control rx/tx
+[   13.990000] UBIFS (ubi0:1): Mounting in unauthenticated mode
+[   14.010000] UBIFS (ubi0:1): background thread "ubifs_bgt0_1" started, PID 538
+[   14.040000] UBIFS (ubi0:1): recovery needed
+[   14.150000] UBIFS (ubi0:1): recovery completed
+[   14.150000] UBIFS (ubi0:1): UBIFS: mounted UBI device 0, volume 1, name "rootfs_data"
+[   14.160000] UBIFS (ubi0:1): LEB size: 129024 bytes (126 KiB), min./max. I/O unit sizes: 2048 bytes/2048 bytes
+[   14.170000] UBIFS (ubi0:1): FS size: 20643840 bytes (19 MiB, 160 LEBs), max 170 LEBs, journal size 1032193 bytes (0 MiB, 8 LEBs)
+[   14.180000] UBIFS (ubi0:1): reserved for root: 975059 bytes (952 KiB)
+[   14.190000] UBIFS (ubi0:1): media format: w5/r0 (latest is w5/r0), UUID 51646053-E487-48FE-A735-FB3FCA4956D5, small LPT model
+[   14.200000] mount_root: switching to ubifs overlay
+[   14.220000] urandom-seed: Seeding with /etc/urandom.seed
+[   14.440000] gswip 1e108000.switch lan1: Link is Down
+[   14.470000] procd: - early -
+[   14.470000] procd: - watchdog -
+[   15.110000] procd: - watchdog -
+[   15.110000] procd: - ubus -
+[   15.270000] procd: - init -
+Please press Enter to activate this console.
+[   16.340000] kmodloader: loading kernel modules from /etc/modules.d/*
+[   16.360000] NET: Registered PF_ATMPVC protocol family
+[   16.360000] NET: Registered PF_ATMSVC protocol family
+[   16.380000] PPP generic driver version 2.4.2
+[   16.710000] NET: Registered PF_PPPOX protocol family
+[   16.800000] kmodloader: done loading kernel modules from /etc/modules.d/*
+[   19.330000] urngd: v1.0.2 started.
+[   30.420000] gswip 1e108000.switch lan1: configuring for phy/internal link mode
+[   30.440000] br-lan: port 1(lan1) entered blocking state
+[   30.440000] br-lan: port 1(lan1) entered disabled state
+[   30.440000] gswip 1e108000.switch lan1: entered allmulticast mode
+[   30.450000] lantiq,xrx200-net 1e10b308.eth eth0: entered allmulticast mode
+[   30.480000] gswip 1e108000.switch lan1: entered promiscuous mode
+[   30.610000] gswip 1e108000.switch lan2: configuring for phy/internal link mode
+[   30.640000] br-lan: port 2(lan2) entered blocking state
+[   30.640000] br-lan: port 2(lan2) entered disabled state
+[   30.650000] gswip 1e108000.switch lan2: entered allmulticast mode
+[   30.660000] gswip 1e108000.switch lan2: entered promiscuous mode
+[   30.710000] gswip 1e108000.switch lan3: configuring for phy/internal link mode
+[   30.720000] br-lan: port 3(lan3) entered blocking state
+[   30.730000] br-lan: port 3(lan3) entered disabled state
+[   30.730000] gswip 1e108000.switch lan3: entered allmulticast mode
+[   30.750000] gswip 1e108000.switch lan3: entered promiscuous mode
+[   30.770000] gswip 1e108000.switch lan4: configuring for phy/internal link mode
+[   30.800000] br-lan: port 4(lan4) entered blocking state
+[   30.800000] br-lan: port 4(lan4) entered disabled state
+[   30.810000] gswip 1e108000.switch lan4: entered allmulticast mode
+[   30.820000] gswip 1e108000.switch lan4: entered promiscuous mode
+[   30.860000] gswip 1e108000.switch wan: configuring for phy/rgmii-id link mode
+[   34.000000] gswip 1e108000.switch wan: Link is Up - 1Gbps/Full - flow control rx/tx
+[   35.600000] gswip 1e108000.switch lan1: Link is Up - 1Gbps/Full - flow control rx/tx
+[   35.600000] br-lan: port 1(lan1) entered blocking state
+[   35.610000] br-lan: port 1(lan1) entered forwarding state
+
+
+
+BusyBox v1.38.0 (2026-05-13 02:19:59 UTC) built-in shell (ash)
+
+  _______                     ________        __
+ |       |.-----.-----.-----.|  |  |  |.----.|  |_
+ |   -   ||  _  |  -__|     ||  |  |  ||   _||   _|
+ |_______||   __|_____|__|__||________||__|  |____|
+          |__| W I R E L E S S   F R E E D O M
+ -----------------------------------------------------
+ OpenWrt SNAPSHOT, r37657+3-b5bc4becb4
+ -----------------------------------------------------
+
+ === WARNING! =====================================
+ There is no root password defined on this device!
+ Use the "passwd" command to set up a new password
+ in order to prevent unauthorized SSH logins.
+ --------------------------------------------------
+
+root@OpenWrt:~#
