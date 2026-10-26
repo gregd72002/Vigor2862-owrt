@@ -3,32 +3,37 @@ OpenWrt support for the DrayTek Vigor 2862
 
 Contents
 --------
-0001-uboot-lantiq-add-DrayTek-Vigor-2862.patch
-    RAM-boot U-Boot (vigor2862_ram) chainloaded by DrayBoot from the NAND
-    slot at 0x1380000; xRX330 clocks, EBU, RAM sizing; keeps DrayBoot's
-    GPHY firmware in reserved RAM for Linux.
-0002-lantiq-add-kernel-patches-for-the-xRX330-SoC.patch
-    Kernel patches 802 (serial), 803 (DMA), 804 (GPHY firmware from RAM).
-0003-lantiq-add-support-for-DrayTek-Vigor-2862.patch
-    xrx330.dtsi, board DTS, image definition, board.d and sysupgrade.
-xrx330_draytek_vigor2862.dts
-    The board DTS (copy of the file added in 0003).
-openwrt-lantiq-xrx200-draytek_vigor2862-squashfs-factory.bin
-    Factory image built from this series (Linux 6.18.55),
-    md5 53fe31bd5c5ac286af9d4aeab7c97af6.
-boot.log
-    Serial console of a cold boot with this image, from power on
-    (boot ROM, DrayBoot, U-Boot, kernel) to the OpenWrt shell.
-patches/
-    The kernel patches 802-804 on their own (see patches/README).
+
+- `0001-uboot-lantiq-add-DrayTek-Vigor-2862.patch` — RAM-boot U-Boot
+  (`vigor2862_ram`) chainloaded by DrayBoot from the NAND slot at
+  `0x1380000`; xRX330 clocks, EBU, RAM sizing; keeps DrayBoot's GPHY
+  firmware in reserved RAM for Linux.
+- `0002-lantiq-add-kernel-patches-for-the-xRX330-SoC.patch` — kernel
+  patches 802 (serial), 803 (DMA), 804 (GPHY firmware from RAM).
+- `0003-lantiq-add-support-for-DrayTek-Vigor-2862.patch` — `xrx330.dtsi`,
+  board DTS, image definition, `board.d` and sysupgrade.
+- `xrx330_draytek_vigor2862.dts` — the board DTS (copy of the file added
+  in 0003).
+- `openwrt-lantiq-xrx200-draytek_vigor2862-squashfs-factory.bin` — factory
+  image built from this series (Linux 6.18.55), md5
+  `53fe31bd5c5ac286af9d4aeab7c97af6`.
+- `boot.log` — serial console of a cold boot with this image, from power
+  on (boot ROM, DrayBoot, U-Boot, kernel) to the OpenWrt shell.
+- `patches/` — the kernel patches 802-804 on their own (see
+  [`patches/README.md`](patches/README.md)).
 
 Dependencies
 ------------
+
 - The DrayTek Vigor 2860 series (OpenWrt PR 26084, 3 commits); the patches
   apply on top of "lantiq: add support for DrayTek Vigor 2860ac".
 - The draytek-drayboot image tool (openwrt/firmware-utils PR 85).
 
-Apply with: git am 000*.patch
+Apply with:
+
+```sh
+git am 000*.patch
+```
 
 Switch (GPHY) firmware
 ----------------------
@@ -41,9 +46,10 @@ its "VR9 V1.2 GPHY GE" image (version 0x8435) to RAM at 0x200000 and boots
 the GPHYs from there. The kernel later overwrites that RAM, so it cannot
 be used in place. The approach is therefore:
 
-1. U-Boot (0001) copies the 64 KiB image to the top of RAM (0x7fe0000)
-   and appends a magic/length/crc32 trailer. It does this only when the
-   GPHYs were booted from 0x200000 by DrayBoot (on TFTP flash).
+1. U-Boot (0001) copies the 64 KiB image to the reserved top of RAM
+   (0x7fe0000) and writes a magic/length/crc32 trailer in the last 16
+   bytes of that 128 KiB region. It does this only when the GPHYs were
+   booted from 0x200000 by DrayBoot.
 2. The board DTS (0003) reserves 0x7fe0000-0x7ffffff (no-map) and points
    each GPHY node at it with "memory-region".
 3. lantiq_gswip (patch 804, 0002) checks the trailer and boots the GPHYs
@@ -57,6 +63,7 @@ the gswip probe fails and no switch ports, including WAN, come up.
 
 Installation
 ------------
+
 1. Hold reset while powering on to enter the DrayBoot TFTP recovery.
 2. Set the computer to 192.168.1.2/24 and connect it to LAN1.
 3. Rename the factory image to v2862x.bin. DrayBoot only accepts images
@@ -69,7 +76,9 @@ Installation
 
 Recovery / revert to stock
 --------------------------
+
 Same as the Vigor 2860:
+
 1. Download the DrayOS firmware for the 2862 from DrayTek's website and
    extract the .zip file.
 2. Enter the DrayBoot TFTP recovery (hold reset while powering on).
