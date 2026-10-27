@@ -101,43 +101,19 @@
 
 	memory@0 {
 		device_type = "memory";
-		/* top 1 MiB is used by the vendor firmware, keep it untouched */
+		/*
+		 * top 1 MiB is used by the vendor firmware and by U-Boot's copy
+		 * of the GPHY firmware at 0x7fe0000, keep it untouched
+		 */
 		reg = <0x0 0x7f00000>;
-	};
-
-	reserved-memory {
-		#address-cells = <1>;
-		#size-cells = <1>;
-		ranges;
-
-		/* U-Boot copies DrayBoot's GPHY firmware here */
-		gphy_fw_mem: gphy-firmware@7fe0000 {
-			reg = <0x7fe0000 0x20000>;
-			no-map;
-		};
 	};
 };
 
 /*
- * The GPHYs run their firmware from RAM. DrayBoot leaves it at 0x200000,
- * inside the kernel's memory; U-Boot copies it to gphy_fw_mem.
+ * U-Boot boots the GPHYs from its firmware copy at 0x7fe0000 (outside the
+ * kernel's memory), so the switch driver must not reset them or load firmware.
  */
-&gphy0 {
-	memory-region = <&gphy_fw_mem>;
-};
-
-&gphy1 {
-	memory-region = <&gphy_fw_mem>;
-};
-
-&gphy2 {
-	memory-region = <&gphy_fw_mem>;
-};
-
-&gphy3 {
-	memory-region = <&gphy_fw_mem>;
-};
-
+/delete-node/ &gphy_fw;
 
 /*
  * Front panel LAN1-LAN4 = switch ports (MDIO) 1, 4, 2, 3; the GPHY LEDs follow the jacks.
@@ -394,8 +370,4 @@
 &pcie0 {
 	status = "okay";
 	reset-gpios = <&stp 11 GPIO_ACTIVE_LOW>;
-};
-
-&pcie0_phy {
-	status = "okay";
 };

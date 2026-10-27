@@ -1,7 +1,7 @@
-From 2c9dd9c909a26478cc398c0060cd3e6f41327840 Mon Sep 17 00:00:00 2001
+From dc3b79f88027ff2c61154ebc305fda6cb8fcdbb0 Mon Sep 17 00:00:00 2001
 From: Gregory Dymarek <gregd72002@gmail.com>
 Date: Mon, 26 Oct 2026 22:08:11 +0000
-Subject: [PATCH 3/4] lantiq: add support for DrayTek Vigor 2862
+Subject: [PATCH 3/3] lantiq: add support for DrayTek Vigor 2862
 
 Hardware:
 - SoC:      Lantiq xRX330 (GRX369, part 0x011, v1.1), MIPS 34Kc @ 600 MHz
@@ -26,15 +26,23 @@ which boots the kernel from 0x1480000; the rootfs is UBI from
 firmware kept there is preserved for recovery. The layout is the same
 as on the Vigor 2860.
 
-The GPHYs run from the firmware copy DrayBoot leaves in RAM; U-Boot
-moves it to a reserved region and the switch driver boots the GPHYs
-from it.
+The GPHYs run their firmware from RAM. U-Boot copies DrayBoot's copy
+above the memory given to Linux and restarts the GPHYs from it, so the
+board DTS deletes the gphy-fw node and the switch driver leaves the
+GPHYs alone.
 
 Front panel LAN1-LAN4 are switch ports 1, 4, 2 and 3; the port labels
 and LEDs follow the panel.
 
+PCIe:
+The VRX318 DSL modem is on the xRX330 PCIe root complex 0, the
+VR9-compatible one at 0x1d900000 that the existing ifxmips_pcie driver
+handles; xrx330.dtsi describes it and its PHY. The endpoint reset
+(PERST#) is STP output 11, active low. The VRX318 enumerates as
+1bef:0020, link 2.5 GT/s x1; there is no VRX318 driver in OpenWrt yet.
+
 Installation:
-1. Enter the DrayBoot TFTP recovery
+1. Hold reset while powering on to enter the DrayBoot TFTP recovery
 2. Set the computer to 192.168.1.2/24 and connect it to LAN1
 3. Rename the factory image
    openwrt-lantiq-xrx200-draytek_vigor2862-squashfs-factory.bin to
@@ -47,8 +55,12 @@ Installation:
    OpenWrt; the backup slot keeps the stock firmware
 
 Revert to stock:
-DrayBoot verifies the primary slot checksum on every boot and restores
-the backup slot (stock firmware) on a mismatch.
+1. Download the DrayOS firmware for the 2862 from DrayTek and extract
+   the .zip file
+2. Enter the DrayBoot TFTP recovery (hold reset while powering on)
+3. Upload the DrayOS .rst file via the same TFTP recovery
+DrayBoot also restores the backup slot (stock firmware) by itself when
+the primary slot checksum is bad.
 
 MAC addresses:
 LAN   00:1d:aa:xx:xx:88  SPI-NOR 0x3fff8
@@ -57,23 +69,23 @@ WAN   +2
 Assisted-by: Claude
 Signed-off-by: Gregory Dymarek <gregd72002@gmail.com>
 ---
- target/linux/lantiq/dts/xrx330.dtsi           | 315 ++++++++++++++
- .../lantiq/dts/xrx330_draytek_vigor2862.dts   | 388 ++++++++++++++++++
+ target/linux/lantiq/dts/xrx330.dtsi           | 344 ++++++++++++++++
+ .../lantiq/dts/xrx330_draytek_vigor2862.dts   | 373 ++++++++++++++++++
  target/linux/lantiq/image/Makefile            |   2 +-
  target/linux/lantiq/image/vr9.mk              |  21 +-
  .../xrx200/base-files/etc/board.d/01_leds     |  12 +
  .../xrx200/base-files/etc/board.d/02_network  |   6 +-
  .../xrx200/base-files/lib/upgrade/platform.sh |   1 +
- 7 files changed, 742 insertions(+), 3 deletions(-)
+ 7 files changed, 756 insertions(+), 3 deletions(-)
  create mode 100644 target/linux/lantiq/dts/xrx330.dtsi
  create mode 100644 target/linux/lantiq/dts/xrx330_draytek_vigor2862.dts
 
 diff --git a/target/linux/lantiq/dts/xrx330.dtsi b/target/linux/lantiq/dts/xrx330.dtsi
 new file mode 100644
-index 0000000000..21402d8a23
+index 0000000000..4f36bc28d9
 --- /dev/null
 +++ b/target/linux/lantiq/dts/xrx330.dtsi
-@@ -0,0 +1,315 @@
+@@ -0,0 +1,344 @@
 +// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
 +
 +/dts-v1/;
@@ -86,6 +98,7 @@ index 0000000000..21402d8a23
 + */
 +
 +#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/phy/phy-lantiq-vrx200-pcie.h>
 +
 +/ {
 +	#address-cells = <1>;
@@ -156,6 +169,18 @@ index 0000000000..21402d8a23
 +		cgu0: cgu@103000 {
 +			compatible = "lantiq,cgu-xway";
 +			reg = <0x103000 0x1000>;
++		};
++
++		pcie0_phy: phy@106800 {
++			compatible = "lantiq,arx300-pcie-phy";
++			reg = <0x106800 0x100>;
++			lantiq,rcu = <&rcu0>;
++			lantiq,rcu-endian-offset = <0x4c>;
++			lantiq,rcu-big-endian-mask = <0x80>; /* bit 7 */
++			big-endian;
++			resets = <&reset0 12 24>, <&reset0 22 22>;
++			reset-names = "phy", "pcie";
++			#phy-cells = <1>;
 +		};
 +
 +		rcu0: rcu@203000 {
@@ -266,7 +291,7 @@ index 0000000000..21402d8a23
 +				compatible = "lantiq,xrx200-mdio";
 +			};
 +
-+			gphy-fw {
++			gphy_fw: gphy-fw {
 +				compatible = "lantiq,xrx330-gphy-fw", "lantiq,gphy-fw";
 +				lantiq,rcu = <&rcu0>;
 +				#address-cells = <1>;
@@ -345,6 +370,22 @@ index 0000000000..21402d8a23
 +			status = "disabled";
 +		};
 +
++		pcie0: pcie@d900000 {
++			compatible = "lantiq,pcie-xrx200";
++			reg = <0xd900000 0x1000>;
++			interrupt-parent = <&icu0>;
++			interrupts = <161 144 145 146 147>;
++			phys = <&pcie0_phy LANTIQ_PCIE_PHY_MODE_36MHZ>;
++			phy-names = "pcie";
++			resets = <&reset0 22 22>;
++			lantiq,rcu = <&rcu0>;
++			device_type = "pci";
++			#address-cells = <3>;
++			#size-cells = <2>;
++			#interrupt-cells = <1>;
++			status = "disabled";
++		};
++
 +		usb0: usb@e101000 {
 +			#address-cells = <1>;
 +			#size-cells = <0>;
@@ -391,10 +432,10 @@ index 0000000000..21402d8a23
 +};
 diff --git a/target/linux/lantiq/dts/xrx330_draytek_vigor2862.dts b/target/linux/lantiq/dts/xrx330_draytek_vigor2862.dts
 new file mode 100644
-index 0000000000..f6f1a0137f
+index 0000000000..498eebbbac
 --- /dev/null
 +++ b/target/linux/lantiq/dts/xrx330_draytek_vigor2862.dts
-@@ -0,0 +1,388 @@
+@@ -0,0 +1,373 @@
 +// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
 +
 +#include "xrx330.dtsi"
@@ -498,43 +539,19 @@ index 0000000000..f6f1a0137f
 +
 +	memory@0 {
 +		device_type = "memory";
-+		/* top 1 MiB is used by the vendor firmware, keep it untouched */
++		/*
++		 * top 1 MiB is used by the vendor firmware and by U-Boot's copy
++		 * of the GPHY firmware at 0x7fe0000, keep it untouched
++		 */
 +		reg = <0x0 0x7f00000>;
-+	};
-+
-+	reserved-memory {
-+		#address-cells = <1>;
-+		#size-cells = <1>;
-+		ranges;
-+
-+		/* U-Boot copies DrayBoot's GPHY firmware here */
-+		gphy_fw_mem: gphy-firmware@7fe0000 {
-+			reg = <0x7fe0000 0x20000>;
-+			no-map;
-+		};
 +	};
 +};
 +
 +/*
-+ * The GPHYs run their firmware from RAM. DrayBoot leaves it at 0x200000,
-+ * inside the kernel's memory; U-Boot copies it to gphy_fw_mem.
++ * U-Boot boots the GPHYs from its firmware copy at 0x7fe0000 (outside the
++ * kernel's memory), so the switch driver must not reset them or load firmware.
 + */
-+&gphy0 {
-+	memory-region = <&gphy_fw_mem>;
-+};
-+
-+&gphy1 {
-+	memory-region = <&gphy_fw_mem>;
-+};
-+
-+&gphy2 {
-+	memory-region = <&gphy_fw_mem>;
-+};
-+
-+&gphy3 {
-+	memory-region = <&gphy_fw_mem>;
-+};
-+
++/delete-node/ &gphy_fw;
 +
 +/*
 + * Front panel LAN1-LAN4 = switch ports (MDIO) 1, 4, 2, 3; the GPHY LEDs follow the jacks.
@@ -759,7 +776,10 @@ index 0000000000..f6f1a0137f
 +	};
 +};
 +
-+/* GPHY LEDs: STP outputs 2-3, 5-6, 8-9 and 11-12 are driven by the GPHYs */
++/*
++ * LAN LEDs (active high) are driven by the GPHYs: STP outputs 2-3, 5-6, 8-9
++ * and, for the phy4 field, 17-18. Output 11 is the VRX318 PCIe reset.
++ */
 +&stp {
 +	status = "okay";
 +	lantiq,phy1 = <0x3>;
@@ -782,6 +802,12 @@ index 0000000000..f6f1a0137f
 +
 +&usb_phy1 {
 +	status = "okay";
++};
++
++/* VRX318 DSL modem */
++&pcie0 {
++	status = "okay";
++	reset-gpios = <&stp 11 GPIO_ACTIVE_LOW>;
 +};
 diff --git a/target/linux/lantiq/image/Makefile b/target/linux/lantiq/image/Makefile
 index 7fd3b34878..cae580913b 100644
