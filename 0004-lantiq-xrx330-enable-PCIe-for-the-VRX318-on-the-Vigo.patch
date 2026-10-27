@@ -1,0 +1,117 @@
+From b2ba9ff2e8b89f206c772e0a99212d80f7cb6dca Mon Sep 17 00:00:00 2001
+From: Gregory Dymarek <gregd72002@gmail.com>
+Date: Mon, 26 Oct 2026 23:52:21 +0000
+Subject: [PATCH 4/4] lantiq: xrx330: enable PCIe for the VRX318 on the Vigor
+ 2862
+
+The VRX318 DSL modem of the Vigor 2862 is on the xRX330 PCIe root
+complex 0, the VR9-compatible one at 0x1d900000 that the existing
+ifxmips_pcie driver handles. Add this root complex and its PHY to
+xrx330.dtsi and enable them on the board.
+
+The endpoint reset (PERST#) is STP output 11, active low. While it is
+low the link stays in Polling.Compliance; once it is released the link
+trains to L0. The PHY runs in 36 MHz mode, like the vendor firmware.
+
+The VRX318 enumerates as 1bef:0020 with an 8 MiB BAR at 0x1c000000,
+link 2.5 GT/s x1. There is no VRX318 driver in OpenWrt yet, so DSL
+remains unsupported.
+
+Also correct the STP comment: the LAN LEDs are active high and the
+phy4 field drives outputs 17-18, not 11-12.
+
+Assisted-by: Claude
+Signed-off-by: Gregory Dymarek <gregd72002@gmail.com>
+---
+ target/linux/lantiq/dts/xrx330.dtsi           | 30 +++++++++++++++++++
+ .../lantiq/dts/xrx330_draytek_vigor2862.dts   | 15 +++++++++-
+ 2 files changed, 44 insertions(+), 1 deletion(-)
+
+diff --git a/target/linux/lantiq/dts/xrx330.dtsi b/target/linux/lantiq/dts/xrx330.dtsi
+index 21402d8a23..3411a93689 100644
+--- a/target/linux/lantiq/dts/xrx330.dtsi
++++ b/target/linux/lantiq/dts/xrx330.dtsi
+@@ -10,6 +10,7 @@
+  */
+ 
+ #include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/phy/phy-lantiq-vrx200-pcie.h>
+ 
+ / {
+ 	#address-cells = <1>;
+@@ -82,6 +83,19 @@
+ 			reg = <0x103000 0x1000>;
+ 		};
+ 
++		pcie0_phy: phy@106800 {
++			compatible = "lantiq,arx300-pcie-phy";
++			reg = <0x106800 0x100>;
++			lantiq,rcu = <&rcu0>;
++			lantiq,rcu-endian-offset = <0x4c>;
++			lantiq,rcu-big-endian-mask = <0x80>; /* bit 7 */
++			big-endian;
++			resets = <&reset0 12 24>, <&reset0 22 22>;
++			reset-names = "phy", "pcie";
++			#phy-cells = <1>;
++			status = "disabled";
++		};
++
+ 		rcu0: rcu@203000 {
+ 			#address-cells = <1>;
+ 			#size-cells = <1>;
+@@ -269,6 +283,22 @@
+ 			status = "disabled";
+ 		};
+ 
++		pcie0: pcie@d900000 {
++			compatible = "lantiq,pcie-xrx200";
++			reg = <0xd900000 0x1000>;
++			interrupt-parent = <&icu0>;
++			interrupts = <161 144 145 146 147>;
++			phys = <&pcie0_phy LANTIQ_PCIE_PHY_MODE_36MHZ>;
++			phy-names = "pcie";
++			resets = <&reset0 22 22>;
++			lantiq,rcu = <&rcu0>;
++			device_type = "pci";
++			#address-cells = <3>;
++			#size-cells = <2>;
++			#interrupt-cells = <1>;
++			status = "disabled";
++		};
++
+ 		usb0: usb@e101000 {
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+diff --git a/target/linux/lantiq/dts/xrx330_draytek_vigor2862.dts b/target/linux/lantiq/dts/xrx330_draytek_vigor2862.dts
+index f6f1a0137f..2663f83bd8 100644
+--- a/target/linux/lantiq/dts/xrx330_draytek_vigor2862.dts
++++ b/target/linux/lantiq/dts/xrx330_draytek_vigor2862.dts
+@@ -362,7 +362,10 @@
+ 	};
+ };
+ 
+-/* GPHY LEDs: STP outputs 2-3, 5-6, 8-9 and 11-12 are driven by the GPHYs */
++/*
++ * LAN LEDs (active high) are driven by the GPHYs: STP outputs 2-3, 5-6, 8-9
++ * and, for the phy4 field, 17-18. Output 11 is the VRX318 PCIe reset.
++ */
+ &stp {
+ 	status = "okay";
+ 	lantiq,phy1 = <0x3>;
+@@ -386,3 +389,13 @@
+ &usb_phy1 {
+ 	status = "okay";
+ };
++
++/* VRX318 DSL modem */
++&pcie0 {
++	status = "okay";
++	reset-gpios = <&stp 11 GPIO_ACTIVE_LOW>;
++};
++
++&pcie0_phy {
++	status = "okay";
++};
+-- 
+2.43.0
+

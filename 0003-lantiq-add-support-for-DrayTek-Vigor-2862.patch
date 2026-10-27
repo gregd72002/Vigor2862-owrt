@@ -1,7 +1,7 @@
 From 2c9dd9c909a26478cc398c0060cd3e6f41327840 Mon Sep 17 00:00:00 2001
 From: Gregory Dymarek <gregd72002@gmail.com>
 Date: Mon, 26 Oct 2026 22:08:11 +0000
-Subject: [PATCH 3/3] lantiq: add support for DrayTek Vigor 2862
+Subject: [PATCH 3/4] lantiq: add support for DrayTek Vigor 2862
 
 Hardware:
 - SoC:      Lantiq xRX330 (GRX369, part 0x011, v1.1), MIPS 34Kc @ 600 MHz

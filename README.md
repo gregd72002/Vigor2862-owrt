@@ -3,37 +3,36 @@ OpenWrt support for the DrayTek Vigor 2862
 
 Contents
 --------
-
-- `0001-uboot-lantiq-add-DrayTek-Vigor-2862.patch` — RAM-boot U-Boot
-  (`vigor2862_ram`) chainloaded by DrayBoot from the NAND slot at
-  `0x1380000`; xRX330 clocks, EBU, RAM sizing; keeps DrayBoot's GPHY
-  firmware in reserved RAM for Linux.
-- `0002-lantiq-add-kernel-patches-for-the-xRX330-SoC.patch` — kernel
-  patches 802 (serial), 803 (DMA), 804 (GPHY firmware from RAM).
-- `0003-lantiq-add-support-for-DrayTek-Vigor-2862.patch` — `xrx330.dtsi`,
-  board DTS, image definition, `board.d` and sysupgrade.
-- `xrx330_draytek_vigor2862.dts` — the board DTS (copy of the file added
-  in 0003).
-- `openwrt-lantiq-xrx200-draytek_vigor2862-squashfs-factory.bin` — factory
-  image built from this series (Linux 6.18.55), md5
-  `53fe31bd5c5ac286af9d4aeab7c97af6`.
-- `boot.log` — serial console of a cold boot with this image, from power
-  on (boot ROM, DrayBoot, U-Boot, kernel) to the OpenWrt shell.
-- `patches/` — the kernel patches 802-804 on their own (see
-  [`patches/README.md`](patches/README.md)).
+0001-uboot-lantiq-add-DrayTek-Vigor-2862.patch
+    RAM-boot U-Boot (vigor2862_ram) chainloaded by DrayBoot from the NAND
+    slot at 0x1380000; xRX330 clocks, EBU, RAM sizing; keeps DrayBoot's
+    GPHY firmware in reserved RAM for Linux.
+0002-lantiq-add-kernel-patches-for-the-xRX330-SoC.patch
+    Kernel patches 802 (serial), 803 (DMA), 804 (GPHY firmware from RAM).
+0003-lantiq-add-support-for-DrayTek-Vigor-2862.patch
+    xrx330.dtsi, board DTS, image definition, board.d and sysupgrade.
+0004-lantiq-xrx330-enable-PCIe-for-the-VRX318-on-the-Vigo.patch
+    PCIe root complex 0 and its PHY in xrx330.dtsi, enabled on the board
+    with the VRX318 reset on STP output 11. Device tree only, uses the
+    existing PCIe driver. Also corrects the STP LED comment.
+xrx330_draytek_vigor2862.dts
+    The board DTS (copy of the file after 0004).
+openwrt-lantiq-xrx200-draytek_vigor2862-squashfs-factory.bin
+    Factory image built from this series (Linux 6.18.55),
+    md5 4f5c41c3e8555aae97bd65c8bc79eccd.
+boot.log
+    Serial console of a cold boot with this image, from power on
+    (boot ROM, DrayBoot, U-Boot, kernel) to the OpenWrt shell.
+patches/
+    The kernel patches 802-804 on their own (see patches/README).
 
 Dependencies
 ------------
-
 - The DrayTek Vigor 2860 series (OpenWrt PR 26084, 3 commits); the patches
   apply on top of "lantiq: add support for DrayTek Vigor 2860ac".
 - The draytek-drayboot image tool (openwrt/firmware-utils PR 85).
 
-Apply with:
-
-```sh
-git am 000*.patch
-```
+Apply with: git am 000*.patch
 
 Switch (GPHY) firmware
 ----------------------
@@ -46,10 +45,9 @@ its "VR9 V1.2 GPHY GE" image (version 0x8435) to RAM at 0x200000 and boots
 the GPHYs from there. The kernel later overwrites that RAM, so it cannot
 be used in place. The approach is therefore:
 
-1. U-Boot (0001) copies the 64 KiB image to the reserved top of RAM
-   (0x7fe0000) and writes a magic/length/crc32 trailer in the last 16
-   bytes of that 128 KiB region. It does this only when the GPHYs were
-   booted from 0x200000 by DrayBoot.
+1. U-Boot (0001) copies the 64 KiB image to the top of RAM (0x7fe0000)
+   and appends a magic/length/crc32 trailer. It does this only when the
+   GPHYs were booted from 0x200000 by DrayBoot (on TFTP flash).
 2. The board DTS (0003) reserves 0x7fe0000-0x7ffffff (no-map) and points
    each GPHY node at it with "memory-region".
 3. lantiq_gswip (patch 804, 0002) checks the trailer and boots the GPHYs
@@ -63,7 +61,6 @@ the gswip probe fails and no switch ports, including WAN, come up.
 
 Installation
 ------------
-
 1. Hold reset while powering on to enter the DrayBoot TFTP recovery.
 2. Set the computer to 192.168.1.2/24 and connect it to LAN1.
 3. Rename the factory image to v2862x.bin. DrayBoot only accepts images
@@ -76,9 +73,7 @@ Installation
 
 Recovery / revert to stock
 --------------------------
-
 Same as the Vigor 2860:
-
 1. Download the DrayOS firmware for the 2862 from DrayTek's website and
    extract the .zip file.
 2. Enter the DrayBoot TFTP recovery (hold reset while powering on).
@@ -86,20 +81,32 @@ Same as the Vigor 2860:
 DrayBoot also restores the backup slot (stock firmware) by itself when
 the primary slot checksum is bad.
 
+PCIe
+----
+The VRX318 DSL modem sits on PCIe root complex 0 of the xRX330, the
+VR9-compatible one the existing ifxmips_pcie driver handles, so 0004 is
+device tree only. Its reset (PERST#) is STP output 11, active low: while
+it is low the link stays in Polling.Compliance, once released the link
+trains. The VRX318 enumerates as 1bef:0020 (BAR0 8 MiB at 0x1c000000),
+link 2.5 GT/s x1. Root complexes 1 and 2 are not described: the driver
+does not support them and nothing is connected there on this board (the
+stock firmware also fails to link them).
+
 Outstanding
 -----------
-- PCIe: the xRX330 has three PCIe root complexes; the OpenWrt driver only
-  handles the VR9 one. Work in progress, kept out of this series. On RC2
-  the link does not train yet (the endpoint is detected but never answers).
-- DSL: VDSL2/ADSL2+ uses a VRX318 on PCIe. Needs PCIe first, and there is
-  no VRX318 driver in OpenWrt. The DSL LED is defined but stays off.
-- Wi-Fi: not supported. The Wi-Fi variants (n/ac) are expected to have
-  their radios on PCIe as well, so this also waits for PCIe.
+- DSL: VDSL2/ADSL2+ uses the VRX318, which now enumerates on PCIe, but
+  there is no VRX318 driver in OpenWrt. The DSL LED is defined but stays
+  off.
+- Wi-Fi: the tested unit has no Wi-Fi card (the stock firmware finds
+  only the VRX318 on PCIe). Wi-Fi variants (n/ac) are untested.
 
 Tested
 ------
 This image: factory flash over DrayBoot TFTP, first boot and cold boot;
-WAN (AR8035) DHCP and traffic; LAN link; LAN1-4 = switch ports 1, 4, 2, 3;
-LAN LEDs hardware-offloaded.
+WAN (AR8035) DHCP and traffic; LAN link; VRX318 enumerates on PCIe
+(2.5 GT/s x1, no AER errors).
+Earlier test builds: LAN1-4 = switch ports 1, 4, 2, 3; all eight LAN
+LEDs hardware-offloaded; LAN4 LEDs checked with and without a cable with
+the STP set up as in 0004.
 Earlier builds of the same code: USB 1/2, reset button, watchdog,
 sysupgrade, panel LEDs.

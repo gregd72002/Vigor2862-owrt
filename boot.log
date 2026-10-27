@@ -49,7 +49,7 @@ Out:   serial
 Err:   serial
 DRAYBOOT: image length = 0x00080104
 GPHY:  firmware saved at 0x07fe0000, crc32 d1b6e5fc
-Hit any key to stop autoboot:  2  1  0
+Hit any key to stop autoboot:  2  1  0 
 
 NAND read: device 0 offset 0x1480000, size 0x400000
  4194304 bytes read: OK
@@ -57,7 +57,7 @@ NAND read: device 0 offset 0x1480000, size 0x400000
    Image Name:   MIPS OpenWrt Linux-6.18.55
    Created:      2026-10-25  14:46:18 UTC
    Image Type:   MIPS Linux Kernel Image (lzma compressed)
-   Data Size:    3477040 Bytes = 3.3 MiB
+   Data Size:    3477177 Bytes = 3.3 MiB
    Load Address: 80002000
    Entry Point:  80002000
    Verifying Checksum ... OK
@@ -87,8 +87,8 @@ Starting kernel ...
 [    0.000000] printk: log buffer data + meta data: 131072 + 409600 = 540672 bytes
 [    0.000000] Dentry cache hash table entries: 16384 (order: 4, 65536 bytes, linear)
 [    0.000000] Inode-cache hash table entries: 8192 (order: 3, 32768 bytes, linear)
-[    0.000000] Writing ErrCtl register=00025040
-[    0.000000] Readback ErrCtl register=00025040
+[    0.000000] Writing ErrCtl register=000250c0
+[    0.000000] Readback ErrCtl register=000250c0
 [    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 32512
 [    0.000000] mem auto-init: stack:off, heap alloc:off, heap free:off
 [    0.000000] SLUB: HWalign=32, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
@@ -114,7 +114,7 @@ Starting kernel ...
 [    0.140000] CPU1 revision is: 00019556 (MIPS 34Kc)
 [    0.200000] Counter synchronization [CPU#0 -> CPU#1]: passed
 [    0.210000] smp: Brought up 1 node, 2 CPUs
-[    0.210000] Memory: 115004K/130048K available (8753K kernel code, 649K rwdata, 1856K rodata, 1268K init, 220K bss, 14176K reserved, 0K cma-reserved)
+[    0.210000] Memory: 115000K/130048K available (8753K kernel code, 649K rwdata, 1856K rodata, 1268K init, 220K bss, 14180K reserved, 0K cma-reserved)
 [    0.220000] posixtimers hash table entries: 1024 (order: 1, 8192 bytes, linear)
 [    0.230000] futex hash table entries: 512 (16384 bytes on 1 NUMA nodes, total 16 KiB, linear).
 [    0.240000] pinctrl core: initialized pinctrl subsystem
@@ -134,7 +134,7 @@ Starting kernel ...
 [    0.380000] TCP bind hash table entries: 1024 (order: 2, 16384 bytes, linear)
 [    0.390000] TCP: Hash tables configured (established 1024 bind 1024)
 [    0.400000] MPTCP token hash table entries: 256 (order: 0, 4096 bytes, linear)
-[    0.400000] UDP hash table entries: 256 (order: 2, 14336 bytes, linear)
+[    0.410000] UDP hash table entries: 256 (order: 2, 14336 bytes, linear)
 [    0.410000] UDP-Lite hash table entries: 256 (order: 2, 14336 bytes, linear)
 [    0.420000] NET: Registered PF_UNIX/PF_LOCAL protocol family
 [    0.430000] PCI: CLS 0 bytes, default 32
@@ -168,114 +168,136 @@ Starting kernel ...
 [    0.720000] NET: Registered PF_INET6 protocol family
 [    0.730000] Segment Routing with IPv6
 [    0.730000] In-situ OAM (IOAM) with IPv6
-[    0.730000] NET: Registered PF_PACKET protocol family
+[    0.740000] NET: Registered PF_PACKET protocol family
 [    0.740000] 8021q: 802.1Q VLAN Support v1.8
-[    0.800000] UBI: auto-attach mtd3
-[    0.810000] ubi0: attaching mtd3
-[    0.840000] ubi0: scanning is finished
-[    0.890000] ubi0: attached mtd3 (name "ubi", size 27 MiB)
-[    0.890000] ubi0: PEB size: 131072 bytes (128 KiB), LEB size: 129024 bytes
-[    0.900000] ubi0: min./max. I/O unit sizes: 2048/2048, sub-page size 512
-[    0.900000] ubi0: VID header offset: 512 (aligned 512), data offset: 2048
-[    0.910000] ubi0: good PEBs: 216, bad PEBs: 0, corrupted PEBs: 0
-[    0.920000] ubi0: user volume: 2, internal volumes: 1, max. volumes count: 128
-[    0.920000] ubi0: max/mean erase counter: 2/0, WL threshold: 4096, image sequence number: 1792939578
-[    0.930000] ubi0: available PEBs: 0, total reserved PEBs: 216, PEBs reserved for bad PEB handling: 20
-[    0.940000] ubi0: background thread "ubi_bgt0d" started, PID 308
-[    0.950000] block ubiblock0_0: created from ubi0:0(rootfs)
-[    0.950000] ubiblock: device ubiblock0_0 (rootfs) set to be root files[    0.960000] check access for rdinit=/init failed: -2, ignoring
-[    0.970000] VFS: Mounted root (squashfs filesystem) readonly on device 254:0.
-[    0.980000] Freeing unused kernel image (initmem) memory: 1268K
-[    0.990000] This architecture does not have kernel memory protection.
-[    0.990000] Run /sbin/init as init process
-[    1.840000] init: Console is alive
-[    1.840000] init: - watchdog -
-[    2.500000] kmodloader: loading kernel modules from /etc/modules-boot.d/*
-[    2.560000] gpio_button_hotplug: loading out-of-tree module taints kernel.
-[    2.580000] SCSI subsystem initialized
-[    4.410000] gswip 1e108000.switch: configuring for fixed/internal link mode
-[    4.410000] gswip 1e108000.switch: Link is Up - 1Gbps/Full - flow control off
-[    4.490000] gswip 1e108000.switch wan (uninitialized): PHY [1e108000.switch-mii:07] driver [Qualcomm Atheros AR8035] (irq=POLL)
-[    4.500000] gswip 1e108000.switch lan1 (uninitialized): PHY [1e108000.switch-mii:01] driver [Intel XWAY PHY11G (xRX v1.2 integrated)] (irq=POLL)
-[    4.510000] gswip 1e108000.switch lan3 (uninitialized): PHY [1e108000.switch-mii:02] driver [Intel XWAY PHY11G (xRX v1.2 integrated)] (irq=POLL)
-[    4.530000] gswip 1e108000.switch lan4 (uninitialized): PHY [1e108000.switch-mii:03] driver [Intel XWAY PHY11G (xRX v1.2 integrated)] (irq=POLL)
-[    4.540000] gswip 1e108000.switch lan2 (uninitialized): PHY [1e108000.switch-mii:04] driver [Intel XWAY PHY11G (xRX v1.2 integrated)] (irq=POLL)
-[    4.560000] lantiq,xrx200-net 1e10b308.eth eth0: entered promiscuous mode
-[    4.560000] DSA: tree 0 setup
-[    4.570000] gswip 1e108000.switch: probed GSWIP version 22 mod 1
-[    4.590000] dwc2 1e101000.usb: supply vusb_d not found, using dummy regulator
-[    4.590000] dwc2 1e101000.usb: supply vusb_a not found, using dummy regulator
-[    4.700000] dwc2 1e101000.usb: DWC OTG Controller
-[    4.710000] dwc2 1e101000.usb: new USB bus registered, assigned bus number 1
-[    4.710000] dwc2 1e101000.usb: irq 62, io mem 0x1e101000
-[    4.720000] hub 1-0:1.0: USB hub found
-[    4.720000] hub 1-0:1.0: 1 port detected
-[    4.730000] dwc2 1e106000.usb: supply vusb_d not found, using dummy regulator
-[    4.740000] dwc2 1e106000.usb: supply vusb_a not found, using dummy regulator
-[    4.840000] dwc2 1e106000.usb: DWC OTG Controller
-[    4.850000] dwc2 1e106000.usb: new USB bus registered, assigned bus number 2
-[    4.850000] dwc2 1e106000.usb: irq 91, io mem 0x1e106000
-[    4.860000] hub 2-0:1.0: USB hub found
-[    4.860000] hub 2-0:1.0: 1 port detected
-[    4.880000] usbcore: registered new interface driver usb-storage
-[    4.890000] kmodloader: done loading kernel modules from /etc/modules-boot.d/*
-[    4.900000] init: - preinit -
-[    8.520000] random: crng init done
-[    9.580000] gswip 1e108000.switch lan1: configuring for phy/internal link mode
+[    1.000000] PCI host bridge to bus 0000:00
+[    1.000000] pci_bus 0000:00: root bus resource [mem 0x1c000000-0x1cffffff]
+[    1.010000] pci_bus 0000:00: root bus resource [io  0x1d800000-0x1d8fffff]
+[    1.010000] pci_bus 0000:00: No busn resource found for root bus, will use [bus 00-ff]
+[    1.020000] ifx_pcie_rc_class_early_fixup: fixed pcie host bridge to pci-pci bridge
+[    1.040000] pci 0000:00:00.0: ifx_pcie_rc_class_early_fixup+0x0/0x7c took 17106 usecs
+[    1.050000] pci 0000:00:00.0: [1bef:0011] type 01 class 0x060400 PCIe Root Port
+[    1.050000] pci 0000:00:00.0: PCI bridge to [bus 01-ff]
+[    1.060000] pci 0000:00:00.0:   bridge window [io  0x1d800000-0x1d8fffff]
+[    1.060000] pci 0000:00:00.0:   bridge window [mem 0x1c000000-0x1cffffff]
+[    1.070000] pci 0000:00:00.0:   bridge window [mem 0x1c000000-0x1cffffff pref]
+[    1.080000] pci 0000:00:00.0: PME# supported from D0 D3hot
+[    1.090000] pci 0000:01:00.0: [1bef:0020] type 00 class 0x028000 PCIe Endpoint
+[    1.090000] pci 0000:01:00.0: BAR 0 [mem 0x00000000-0x007fffff pref]
+[    1.100000] pci 0000:01:00.0: PME# supported from D0 D3hot D3cold
+[    1.110000] pci_bus 0000:01: busn_res: [bus 01-ff] end is updated to 01
+[    1.110000] pci_bus 0000:00: busn_res: [bus 00-ff] end is updated to 01
+[    1.120000] pci 0000:00:00.0: bridge window [mem 0x1c000000-0x1c7fffff pref]: assigned
+[    1.130000] pci 0000:01:00.0: BAR 0 [mem 0x1c000000-0x1c7fffff pref]: assigned
+[    1.130000] pci 0000:00:00.0: PCI bridge to [bus 01]
+[    1.140000] pci 0000:00:00.0:   bridge window [mem 0x1c000000-0x1c7fffff pref]
+[    1.150000] ifx_pcie_bios_map_irq port 0 dev 0000:00:00.0 slot 0 pin 1 
+[    1.150000] ifx_pcie_bios_map_irq dev 0000:00:00.0 irq 144 assigned
+[    1.160000] pcieport 0000:00:00.0: enabling device (0000 -> 0002)
+[    1.170000] UBI: auto-attach mtd3
+[    1.170000] ubi0: attaching mtd3
+[    1.200000] ubi0: scanning is finished
+[    1.300000] ubi0: attached mtd3 (name "ubi", size 27 MiB)
+[    1.300000] ubi0: PEB size: 131072 bytes (128 KiB), LEB size: 129024 bytes
+[    1.310000] ubi0: min./max. I/O unit sizes: 2048/2048, sub-page size 512
+[    1.310000] ubi0: VID header offset: 512 (aligned 512), data offset: 2048
+[    1.320000] ubi0: good PEBs: 216, bad PEBs: 0, corrupted PEBs: 0
+[    1.330000] ubi0: user volume: 2, internal volumes: 1, max. volumes count: 128
+[    1.330000] ubi0: max/mean erase counter: 2/0, WL threshold: 4096, image sequence number: 1792939578
+[    1.340000] ubi0: available PEBs: 0, total reserved PEBs: 216, PEBs reserved for bad PEB handling: 20
+[    1.350000] ubi0: background thread "ubi_bgt0d" started, PID 332
+[    1.350000] block ubiblock0_0: created from ubi0:0(rootfs)
+[    1.360000] ubiblock: device ubiblock0_0 (rootfs) set to be root filesystem[    1.370000] check access for rdinit=/init failed: -2, ignoring
+[    1.380000] VFS: Mounted root (squashfs filesystem) readonly on device 254:0.
+[    1.390000] Freeing unused kernel image (initmem) memory: 1268K
+[    1.400000] This architecture does not have kernel memory protection.
+[    1.400000] Run /sbin/init as init process
+[    2.250000] init: Console is alive
+[    2.250000] init: - watchdog -
+[    2.910000] kmodloader: loading kernel modules from /etc/modules-boot.d/*
+[    2.960000] gpio_button_hotplug: loading out-of-tree module taints kernel.
+[    2.980000] SCSI subsystem initialized
+[    4.800000] gswip 1e108000.switch: configuring for fixed/internal link mode
+[    4.810000] gswip 1e108000.switch: Link is Up - 1Gbps/Full - flow control off
+[    4.890000] gswip 1e108000.switch wan (uninitialized): PHY [1e108000.switch-mii:07] driver [Qualcomm Atheros AR8035] (irq=POLL)
+[    4.900000] gswip 1e108000.switch lan1 (uninitialized): PHY [1e108000.switch-mii:01] driver [Intel XWAY PHY11G (xRX v1.2 integrated)] (irq=POLL)
+[    4.910000] gswip 1e108000.switch lan3 (uninitialized): PHY [1e108000.switch-mii:02] driver [Intel XWAY PHY11G (xRX v1.2 integrated)] (irq=POLL)
+[    4.930000] gswip 1e108000.switch lan4 (uninitialized): PHY [1e108000.switch-mii:03] driver [Intel XWAY PHY11G (xRX v1.2 integrated)] (irq=POLL)
+[    4.940000] gswip 1e108000.switch lan2 (uninitialized): PHY [1e108000.switch-mii:04] driver [Intel XWAY PHY11G (xRX v1.2 integrated)] (irq=POLL)
+[    4.960000] lantiq,xrx200-net 1e10b308.eth eth0: entered promiscuous mode
+[    4.960000] DSA: tree 0 setup
+[    4.970000] gswip 1e108000.switch: probed GSWIP version 22 mod 1
+[    4.990000] dwc2 1e101000.usb: supply vusb_d not found, using dummy regulator
+[    4.990000] dwc2 1e101000.usb: supply vusb_a not found, using dummy regulator
+[    5.100000] dwc2 1e101000.usb: DWC OTG Controller
+[    5.110000] dwc2 1e101000.usb: new USB bus registered, assigned bus number 1
+[    5.110000] dwc2 1e101000.usb: irq 62, io mem 0x1e101000
+[    5.120000] hub 1-0:1.0: USB hub found
+[    5.120000] hub 1-0:1.0: 1 port detected
+[    5.130000] dwc2 1e106000.usb: supply vusb_d not found, using dummy regulator
+[    5.130000] dwc2 1e106000.usb: supply vusb_a not found, using dummy regulator
+[    5.240000] dwc2 1e106000.usb: DWC OTG Controller
+[    5.250000] dwc2 1e106000.usb: new USB bus registered, assigned bus number 2
+[    5.250000] dwc2 1e106000.usb: irq 91, io mem 0x1e106000
+[    5.260000] hub 2-0:1.0: USB hub found
+[    5.260000] hub 2-0:1.0: 1 port detected
+[    5.280000] usbcore: registered new interface driver usb-storage
+[    5.280000] kmodloader: done loading kernel modules from /etc/modules-boot.d/*
+[    5.300000] init: - preinit -
+[    8.910000] random: crng init done
+[    9.960000] gswip 1e108000.switch lan1: configuring for phy/internal link mode
 Press the [f] key and hit [enter] to enter failsafe mode
 Press the [1], [2], [3] or [4] key and hit [enter] to select the debug level
-[   13.760000] gswip 1e108000.switch lan1: Link is Up - 1Gbps/Full - flow control rx/tx
-[   13.990000] UBIFS (ubi0:1): Mounting in unauthenticated mode
-[   14.010000] UBIFS (ubi0:1): background thread "ubifs_bgt0_1" started, PID 538
-[   14.040000] UBIFS (ubi0:1): recovery needed
-[   14.150000] UBIFS (ubi0:1): recovery completed
-[   14.150000] UBIFS (ubi0:1): UBIFS: mounted UBI device 0, volume 1, name "rootfs_data"
-[   14.160000] UBIFS (ubi0:1): LEB size: 129024 bytes (126 KiB), min./max. I/O unit sizes: 2048 bytes/2048 bytes
-[   14.170000] UBIFS (ubi0:1): FS size: 20643840 bytes (19 MiB, 160 LEBs), max 170 LEBs, journal size 1032193 bytes (0 MiB, 8 LEBs)
-[   14.180000] UBIFS (ubi0:1): reserved for root: 975059 bytes (952 KiB)
-[   14.190000] UBIFS (ubi0:1): media format: w5/r0 (latest is w5/r0), UUID 51646053-E487-48FE-A735-FB3FCA4956D5, small LPT model
-[   14.200000] mount_root: switching to ubifs overlay
-[   14.220000] urandom-seed: Seeding with /etc/urandom.seed
-[   14.440000] gswip 1e108000.switch lan1: Link is Down
-[   14.470000] procd: - early -
-[   14.470000] procd: - watchdog -
-[   15.110000] procd: - watchdog -
-[   15.110000] procd: - ubus -
-[   15.270000] procd: - init -
+[   14.370000] UBIFS (ubi0:1): Mounting in unauthenticated mode
+[   14.390000] UBIFS (ubi0:1): background thread "ubifs_bgt0_1" started, PID 557
+[   14.420000] UBIFS (ubi0:1): recovery needed
+[   14.530000] UBIFS (ubi0:1): recovery completed
+[   14.530000] UBIFS (ubi0:1): UBIFS: mounted UBI device 0, volume 1, name "rootfs_data"
+[   14.540000] UBIFS (ubi0:1): LEB size: 129024 bytes (126 KiB), min./max. I/O unit sizes: 2048 bytes/2048 bytes
+[   14.550000] UBIFS (ubi0:1): FS size: 20643840 bytes (19 MiB, 160 LEBs), max 170 LEBs, journal size 1032193 bytes (0 MiB, 8 LEBs)
+[   14.560000] UBIFS (ubi0:1): reserved for root: 975059 bytes (952 KiB)
+[   14.570000] UBIFS (ubi0:1): media format: w5/r0 (latest is w5/r0), UUID 76E8719B-E896-43BE-8523-FB9E8B415CC8, small LPT model
+[   14.580000] mount_root: switching to ubifs overlay
+[   14.600000] urandom-seed: Seeding with /etc/urandom.seed
+[   14.850000] procd: - early -
+[   14.850000] procd: - watchdog -
+[   15.480000] procd: - watchdog -
+[   15.490000] procd: - ubus -
+[   15.590000] procd: - init -
 Please press Enter to activate this console.
-[   16.340000] kmodloader: loading kernel modules from /etc/modules.d/*
-[   16.360000] NET: Registered PF_ATMPVC protocol family
-[   16.360000] NET: Registered PF_ATMSVC protocol family
-[   16.380000] PPP generic driver version 2.4.2
-[   16.710000] NET: Registered PF_PPPOX protocol family
-[   16.800000] kmodloader: done loading kernel modules from /etc/modules.d/*
-[   19.330000] urngd: v1.0.2 started.
-[   30.420000] gswip 1e108000.switch lan1: configuring for phy/internal link mode
-[   30.440000] br-lan: port 1(lan1) entered blocking state
-[   30.440000] br-lan: port 1(lan1) entered disabled state
-[   30.440000] gswip 1e108000.switch lan1: entered allmulticast mode
-[   30.450000] lantiq,xrx200-net 1e10b308.eth eth0: entered allmulticast mode
-[   30.480000] gswip 1e108000.switch lan1: entered promiscuous mode
-[   30.610000] gswip 1e108000.switch lan2: configuring for phy/internal link mode
-[   30.640000] br-lan: port 2(lan2) entered blocking state
-[   30.640000] br-lan: port 2(lan2) entered disabled state
-[   30.650000] gswip 1e108000.switch lan2: entered allmulticast mode
-[   30.660000] gswip 1e108000.switch lan2: entered promiscuous mode
-[   30.710000] gswip 1e108000.switch lan3: configuring for phy/internal link mode
-[   30.720000] br-lan: port 3(lan3) entered blocking state
-[   30.730000] br-lan: port 3(lan3) entered disabled state
-[   30.730000] gswip 1e108000.switch lan3: entered allmulticast mode
-[   30.750000] gswip 1e108000.switch lan3: entered promiscuous mode
-[   30.770000] gswip 1e108000.switch lan4: configuring for phy/internal link mode
-[   30.800000] br-lan: port 4(lan4) entered blocking state
-[   30.800000] br-lan: port 4(lan4) entered disabled state
-[   30.810000] gswip 1e108000.switch lan4: entered allmulticast mode
-[   30.820000] gswip 1e108000.switch lan4: entered promiscuous mode
-[   30.860000] gswip 1e108000.switch wan: configuring for phy/rgmii-id link mode
-[   34.000000] gswip 1e108000.switch wan: Link is Up - 1Gbps/Full - flow control rx/tx
-[   35.600000] gswip 1e108000.switch lan1: Link is Up - 1Gbps/Full - flow control rx/tx
-[   35.600000] br-lan: port 1(lan1) entered blocking state
-[   35.610000] br-lan: port 1(lan1) entered forwarding state
+[   16.870000] kmodloader: loading kernel modules from /etc/modules.d/*
+[   16.890000] NET: Registered PF_ATMPVC protocol family
+[   16.890000] NET: Registered PF_ATMSVC protocol family
+[   16.910000] PPP generic driver version 2.4.2
+[   17.180000] NET: Registered PF_PPPOX protocol family
+[   17.310000] kmodloader: done loading kernel modules from /etc/modules.d/*
+[   19.570000] urngd: v1.0.2 started.
+[   30.850000] gswip 1e108000.switch lan1: configuring for phy/internal link mode
+[   30.870000] br-lan: port 1(lan1) entered blocking state
+[   30.870000] br-lan: port 1(lan1) entered disabled state
+[   30.880000] gswip 1e108000.switch lan1: entered allmulticast mode
+[   30.880000] lantiq,xrx200-net 1e10b308.eth eth0: entered allmulticast mode
+[   30.910000] gswip 1e108000.switch lan1: entered promiscuous mode
+[   31.060000] gswip 1e108000.switch lan2: configuring for phy/internal link mode
+[   31.080000] br-lan: port 2(lan2) entered blocking state
+[   31.080000] br-lan: port 2(lan2) entered disabled state
+[   31.090000] gswip 1e108000.switch lan2: entered allmulticast mode
+[   31.110000] gswip 1e108000.switch lan2: entered promiscuous mode
+[   31.170000] gswip 1e108000.switch lan3: configuring for phy/internal link mode
+[   31.190000] br-lan: port 3(lan3) entered blocking state
+[   31.190000] br-lan: port 3(lan3) entered disabled state
+[   31.200000] gswip 1e108000.switch lan3: entered allmulticast mode
+[   31.230000] gswip 1e108000.switch lan3: entered promiscuous mode
+[   31.280000] gswip 1e108000.switch lan4: configuring for phy/internal link mode
+[   31.290000] br-lan: port 4(lan4) entered blocking state
+[   31.290000] br-lan: port 4(lan4) entered disabled state
+[   31.300000] gswip 1e108000.switch lan4: entered allmulticast mode
+[   31.320000] gswip 1e108000.switch lan4: entered promiscuous mode
+[   31.370000] gswip 1e108000.switch wan: configuring for phy/rgmii-id link mode
+[   34.480000] gswip 1e108000.switch wan: Link is Up - 1Gbps/Full - flow control rx/tx
+[   35.280000] gswip 1e108000.switch lan2: Link is Up - 1Gbps/Full - flow control rx/tx
+[   35.280000] br-lan: port 2(lan2) entered blocking state
+[   35.290000] br-lan: port 2(lan2) entered forwarding state
 
 
 

@@ -362,7 +362,10 @@
 	};
 };
 
-/* GPHY LEDs: STP outputs 2-3, 5-6, 8-9 and 11-12 are driven by the GPHYs */
+/*
+ * LAN LEDs (active high) are driven by the GPHYs: STP outputs 2-3, 5-6, 8-9
+ * and, for the phy4 field, 17-18. Output 11 is the VRX318 PCIe reset.
+ */
 &stp {
 	status = "okay";
 	lantiq,phy1 = <0x3>;
@@ -384,5 +387,15 @@
 };
 
 &usb_phy1 {
+	status = "okay";
+};
+
+/* VRX318 DSL modem */
+&pcie0 {
+	status = "okay";
+	reset-gpios = <&stp 11 GPIO_ACTIVE_LOW>;
+};
+
+&pcie0_phy {
 	status = "okay";
 };

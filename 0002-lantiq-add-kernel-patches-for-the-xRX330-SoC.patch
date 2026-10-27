@@ -1,7 +1,7 @@
 From 8c4b8993ec8b28ff07c067220217fc3f12f1ad2f Mon Sep 17 00:00:00 2001
 From: Gregory Dymarek <gregd72002@gmail.com>
 Date: Mon, 26 Oct 2026 22:08:11 +0000
-Subject: [PATCH 2/3] lantiq: add kernel patches for the xRX330 SoC
+Subject: [PATCH 2/4] lantiq: add kernel patches for the xRX330 SoC
 
 Add three kernel patches needed by xRX330 (GRX390 family) boards:
 
